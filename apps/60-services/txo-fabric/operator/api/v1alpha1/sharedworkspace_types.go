@@ -85,36 +85,6 @@ type NamedWorkspaceScopeSpec struct {
 	SkillsCollaborative bool `json:"skillsCollaborative,omitempty"`
 }
 
-// TenantWorkspaceSpec declares tenant-owned shared storage. Business files and
-// shared skills remain separate trust domains and therefore receive different PVCs
-// and mount roots even when backed by the same platform storage profile.
-// TenantWorkspaceMigrationBinding is a deprecated stored-object schema for
-// historical CSI migration records. No normal workspace reconciler reads it.
-type TenantWorkspaceMigrationBinding struct {
-	// TargetStorageClassName is the explicit replacement RWX storage class.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=253
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetStorageClassName is immutable"
-	TargetStorageClassName string `json:"targetStorageClassName"`
-
-	// TargetClaimSuffix makes every replacement scope PVC deterministic and distinct.
-	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetClaimSuffix is immutable"
-	TargetClaimSuffix string `json:"targetClaimSuffix"`
-
-	// CopyJobPrefix derives one immutable GitOps-owned evidence Job per source claim:
-	// <copyJobPrefix>-<source-claim-name>. Every Job must complete and bind exact
-	// source/target PVC UIDs before an AgentIdentity may mount migrated storage.
-	// +optional
-	// +kubebuilder:validation:Pattern=`^$|^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
-	CopyJobPrefix string `json:"copyJobPrefix,omitempty"`
-
-	// Cutover selects prepared replacement claims for all tenant workspace mounts.
-	// +optional
-	Cutover bool `json:"cutover,omitempty"`
-}
-
 type TenantWorkspaceSpec struct {
 	// ProfileRef selects platform-owned RWX storage implementation policy.
 	// +kubebuilder:validation:MinLength=1
@@ -129,16 +99,6 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// ClaimSuffix is deprecated and ignored by native workspace reconciliation.
-	// Kept temporarily to decode historical CRs until CRD cleanup is reviewed.
-	// +optional
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
-	ClaimSuffix string `json:"claimSuffix,omitempty"`
-
-	// Migration is deprecated stored-CR compatibility, not active reconciliation.
-	// +optional
-	Migration *TenantWorkspaceMigrationBinding `json:"migration,omitempty"`
 
 	// Organization declares tenant-wide file and skill-library scopes.
 	// +optional
