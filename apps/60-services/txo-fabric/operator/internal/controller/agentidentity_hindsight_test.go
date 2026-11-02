@@ -105,6 +105,72 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 }
 
+func TestHermesNativePVCMountIsFlatAndIdempotentForRetentionPolicies(t *testing.T) {
+	for _, retention := range []string{StorageRetentionRetain, StorageRetentionDelete} {
+		t.Run(retention, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := testScheme(t)
+			tenant := testTenant()
+			profile := testRuntimeProfile()
+			agent := testAgentIdentity()
+			agent.Spec.Runtime.Storage.RetentionPolicy = retention
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			ns := tenantNamespace(tenant.Name)
+			for i := 0; i < 2; i++ {
+				if err := r.ensureDeployment(ctx, agent, tenant, profile, ns, "", ""); err != nil {
+					t.Fatal(err)
+				}
+			}
+			var deployment appsv1.Deployment
+			if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: ns}, &deployment); err != nil {
+				t.Fatal(err)
+			}
+			pod := deployment.Spec.Template.Spec
+			if len(pod.InitContainers) == 0 || len(pod.Containers) == 0 {
+				t.Fatal("Hermes bootstrap and runtime containers missing")
+			}
+			for _, container := range []corev1.Container{pod.InitContainers[0], pod.Containers[0]} {
+				found := false
+				for _, mount := range container.VolumeMounts {
+					if mount.Name == "data" {
+						found = true
+						if mount.MountPath != "/opt/data" || mount.SubPath != "" {
+							t.Fatalf("%s native mount changed: %#v", container.Name, mount)
+						}
+					}
+				}
+				if !found {
+					t.Fatalf("%s has no native data mount", container.Name)
+				}
+				if got := envValue(container.Env, "HERMES_HOME"); got != "/opt/data" {
+					t.Fatalf("%s HERMES_HOME = %q", container.Name, got)
+				}
+			}
+			if envVar(pod.InitContainers[0].Env, "TXO_LEGACY_PROFILE_ADOPTION") == nil ||
+				envValue(pod.InitContainers[0].Env, "TXO_LEGACY_PROFILE_ADOPTION") != "false" {
+				t.Fatal("native bootstrap unexpectedly opts into legacy adoption")
+			}
+			if strings.Contains(pod.InitContainers[0].Command[2], "rm -rf") {
+				t.Fatal("native bootstrap must never delete historical data")
+			}
+			foundPVC := false
+			for _, volume := range pod.Volumes {
+				if volume.Name == "data" {
+					foundPVC = true
+					if volume.PersistentVolumeClaim == nil ||
+						volume.PersistentVolumeClaim.ClaimName != runtimePVCName(agent.Spec.AgentKey) {
+						t.Fatalf("native PVC binding changed: %#v", volume)
+					}
+				}
+			}
+			if !foundPVC {
+				t.Fatal("native runtime PVC volume missing")
+			}
+		})
+	}
+}
+
 func TestHermesRetainedRuntimeCanAdoptLegacyNamedProfile(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
