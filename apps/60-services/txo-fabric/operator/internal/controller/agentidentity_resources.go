@@ -321,7 +321,6 @@ fi
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
 						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
-						{Name: "TXO_RUNTIME_STORAGE_RETENTION", Value: storageRetentionPolicy(agent)},
 						{Name: "TXO_LEGACY_PROFILE_ADOPTION", Value: fmt.Sprintf("%t", agent.Spec.Runtime.Storage.AdoptLegacyProfile)},
 						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
 					},
