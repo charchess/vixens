@@ -50,7 +50,7 @@ class FoundationGuardTests(unittest.TestCase):
         self.assertEqual(claim["metadata"]["name"], "data-openbao-fabric-0-synelia")
         self.assertEqual(claim["spec"]["storageClassName"], "storage-rwo-retain")
         self.assertEqual(set(claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"].split(",")), {"Prune=false", "Delete=false"})
-        self.assertTrue(claim["metadata"]["labels"]["storage.truxonline.io/migration-source-uid"])
+        self.assertFalse(any(key.startswith("storage.truxonline.io/migration-") for key in claim["metadata"]["labels"]))
 
     def test_prod_volume_patch_selects_exact_retained_claim(self):
         prod = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod"
