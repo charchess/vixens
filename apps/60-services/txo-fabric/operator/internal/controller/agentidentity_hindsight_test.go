@@ -183,7 +183,7 @@ func TestHermesLegacyProfileAdoptionRejectsDisposableStorage(t *testing.T) {
 	}
 }
 
-func TestHermesDisposableRuntimeCanDropLegacyNamedProfile(t *testing.T) {
+func TestHermesDisposableRuntimeRejectsLegacyProfileCollision(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
@@ -205,8 +205,11 @@ func TestHermesDisposableRuntimeCanDropLegacyNamedProfile(t *testing.T) {
 	if got := envValue(bootstrap.Env, "TXO_RUNTIME_STORAGE_RETENTION"); got != StorageRetentionDelete {
 		t.Fatalf("bootstrap retention = %q", got)
 	}
-	if !strings.Contains(bootstrap.Command[2], `rm -rf -- "${legacy_profile}"`) {
-		t.Fatalf("disposable migration cleanup missing:\n%s", bootstrap.Command[2])
+	if strings.Contains(bootstrap.Command[2], "rm -rf") {
+		t.Fatalf("bootstrap must never delete legacy profile data:\n%s", bootstrap.Command[2])
+	}
+	if !strings.Contains(bootstrap.Command[2], "refusing to replace existing Hermes profile") || !strings.Contains(bootstrap.Command[2], "exit 78") {
+		t.Fatalf("bootstrap must fail closed on a legacy profile collision:\n%s", bootstrap.Command[2])
 	}
 }
 
