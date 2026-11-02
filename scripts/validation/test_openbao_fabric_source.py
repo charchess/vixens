@@ -44,6 +44,47 @@ class FoundationGuardTests(unittest.TestCase):
             "kind: PersistentVolumeClaim\n",
         ))
 
+    def test_fresh_cluster_base_has_native_retained_volume_template(self):
+        base = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/base"
+        resources = yaml.safe_load((base / "kustomization.yaml").read_text())["resources"]
+        self.assertIn("statefulset.yaml", resources)
+        statefulset = yaml.safe_load((base / "statefulset.yaml").read_text())
+        self.assertEqual(statefulset["kind"], "StatefulSet")
+        spec = statefulset["spec"]
+        self.assertEqual(spec["persistentVolumeClaimRetentionPolicy"],
+                         {"whenDeleted": "Retain", "whenScaled": "Retain"})
+        templates = spec["volumeClaimTemplates"]
+        self.assertEqual(len(templates), 1)
+        self.assertEqual(templates[0]["metadata"]["name"], "data")
+        claim = templates[0]["spec"]
+        self.assertEqual(claim["storageClassName"], "storage-rwo-retain")
+        self.assertEqual(claim["accessModes"], ["ReadWriteOnce"])
+        self.assertEqual(claim["resources"]["requests"]["storage"], "5Gi")
+        data_mounts = [m for container in spec["template"]["spec"]["containers"]
+                       for m in container.get("volumeMounts", []) if m["name"] == "data"]
+        self.assertEqual(len(data_mounts), 1)
+        self.assertEqual(data_mounts[0]["mountPath"], "/openbao/data")
+        self.assertFalse(any(v["name"] == "data" for v in spec["template"]["spec"].get("volumes", [])),
+                         "native volume must come from volumeClaimTemplates, not a migrated claim")
+
+    def test_existing_prod_binding_does_not_change_native_base(self):
+        prod = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod"
+        base = prod.parents[1] / "base"
+        native = yaml.safe_load((base / "statefulset.yaml").read_text())
+        self.assertEqual(native["spec"]["volumeClaimTemplates"][0]["metadata"]["name"], "data")
+        patch = yaml.safe_load((prod / "storage/retained-statefulset-volume.yaml").read_text())
+        self.assertEqual([(step["op"], step["path"]) for step in patch],
+                         [("remove", "/spec/volumeClaimTemplates"),
+                          ("add", "/spec/template/spec/volumes/-")])
+        retained = patch[1]["value"]
+        self.assertEqual(retained["name"], "data")
+        claim_name = retained["persistentVolumeClaim"]["claimName"]
+        claim = yaml.safe_load((prod / "storage/retained-pvc.yaml").read_text())
+        self.assertEqual(claim_name, claim["metadata"]["name"])
+        self.assertEqual(claim_name, "data-openbao-fabric-0-synelia")
+        self.assertNotEqual(claim_name, "data-openbao-fabric-0",
+                            "prod must not silently substitute the fresh-cluster PVC")
+
     def test_recovered_openbao_claim_is_protected_from_argo_prune_and_delete(self):
         claim = yaml.safe_load((MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml").read_text())
         self.assertEqual(claim["kind"], "PersistentVolumeClaim")
