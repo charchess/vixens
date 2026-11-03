@@ -295,7 +295,7 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Contex
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command: []string{"/bin/sh", "-lc", `if [ -d "/opt/data/profiles/${AGENT_NAME}" ]; then
-  echo "refusing to replace an existing Hermes named profile; explicit data transition is required" >&2
+  echo "refusing to replace existing Hermes profile; explicit data transition is required" >&2
   exit 78
 fi
 
