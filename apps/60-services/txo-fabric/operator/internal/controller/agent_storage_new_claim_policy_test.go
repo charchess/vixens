@@ -19,7 +19,6 @@ func TestMissingTenantStoragePolicyCannotProvisionNewAgentPVC(t *testing.T) {
 		t.Run(retention, func(t *testing.T) {
 			ctx := context.Background()
 			tenant := testTenant()
-	tenant.Name = "generic-existing-client"
 			tenant.Name = "generic-new-client"
 			tenant.Spec.AgentStorage = nil
 			agent := testStorageIdentity(tenant.Name, "fresh-agent", retention)
@@ -50,6 +49,7 @@ func TestMissingTenantStoragePolicyCannotProvisionNewAgentPVC(t *testing.T) {
 func TestMissingTenantStoragePolicyKeepsExistingAgentPVC(t *testing.T) {
 	ctx := context.Background()
 	tenant := testTenant()
+	tenant.Name = "generic-existing-client"
 	tenant.Spec.AgentStorage = nil
 	agent := testStorageIdentity(tenant.Name, "existing-agent", StorageRetentionRetain)
 	profile := testRuntimeProfile()
