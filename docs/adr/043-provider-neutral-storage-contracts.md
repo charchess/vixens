@@ -51,6 +51,14 @@ underlying driver configuration does, and use isolated driver-managed parents.
 reprovisionable/disposable data. A workload must not encode `synelia`, `truenas`,
 `iscsi`, `nfs`, NAS endpoints or backing ZFS paths in its storage class selection.
 
+The Fabric operator's compatibility with an **already bound** retained claim
+whose immutable StorageClass reflects its earlier runtime profile is not a
+fresh provisioning path. Its RWO reconcile must verify exact namespace,
+claim name, PVC UID, PV `claimRef` UID and StorageClass before it can maintain
+that existing data. A foreign, unbound or incompletely identified PV fails
+closed without metadata mutation or retroactive adoption. New GitOps tenants
+instead declare `spec.agentStorage` using the two provider-neutral RWO classes.
+
 No existing PV, PVC, CSI `volumeHandle`, volume attachment, zvol, dataset, target,
 extent, NFS export, or workload is renamed, rebound, adopted, or migrated by this
 decision. Historical `retired-csi` and Synelia staging classes remain for the
@@ -63,7 +71,7 @@ replacement claim and follows an exclusive, verified data-copy and rollback gate
 
 - Applications consume stable access/reclamation guarantees instead of a storage
   provider implementation.
-- The class catalogue has four observable, testable entries rather than classes per
+- The class catalogue has six observable, testable entries rather than classes per
   transport, application, dataset, environment, or recovery scenario.
 - The official CSI driver can evolve behind the contract without rewriting new
   workload manifests.
