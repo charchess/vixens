@@ -44,8 +44,8 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 	command := bootstrap.Command[2]
 	for _, want := range []string{
-		`legacy_profile="/opt/data/profiles/${AGENT_NAME}"`,
-		`explicit migration is required`,
+		`if [ -d "/opt/data/profiles/${AGENT_NAME}" ]; then`,
+		`explicit data transition is required`,
 		"config set skills.external_dirs '[\"/workspace/skills\"]'",
 		"config set memory.provider hindsight",
 		"\"mode\": \"local_external\"",
@@ -170,80 +170,31 @@ func TestHermesNativePVCMountIsFlatAndIdempotentForRetentionPolicies(t *testing.
 	}
 }
 
-func TestHermesRetainedRuntimeCanAdoptLegacyNamedProfile(t *testing.T) {
-	ctx := context.Background()
-	scheme := testScheme(t)
-	tenant := testTenant()
-	profile := testRuntimeProfile()
-	agent := testAgentIdentity()
-	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionRetain
-	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
-	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
-	namespace := tenantNamespace(tenant.Name)
-
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, "", ""); err != nil {
-		t.Fatal(err)
-	}
-	var deployment appsv1.Deployment
-	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
-		t.Fatal(err)
-	}
-
-	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if got := envValue(bootstrap.Env, "HERMES_HOME"); got != "/mnt/txo-data/profiles/tina" {
-		t.Fatalf("bootstrap HERMES_HOME = %q", got)
-	}
-	if envVar(bootstrap.Env, "TXO_LEGACY_PROFILE_ADOPTION") != nil {
-		t.Fatal("bootstrap must not carry a second legacy-adoption flag")
-	}
-	if !strings.Contains(bootstrap.Command[2], `if [ "${HERMES_HOME}" != "/opt/data" ]; then`) {
-		t.Fatal("bootstrap must validate adopted home using its effective mount")
-	}
-	if !strings.Contains(bootstrap.Command[2], "requested legacy Hermes profile") {
-		t.Fatalf("bootstrap does not fail closed for a missing adopted profile:\n%s", bootstrap.Command[2])
-	}
-	var bootstrapDataMount corev1.VolumeMount
-	for _, mount := range bootstrap.VolumeMounts {
-		if mount.Name == "data" {
-			bootstrapDataMount = mount
-			break
-		}
-	}
-	if bootstrapDataMount.MountPath != "/mnt/txo-data" || bootstrapDataMount.SubPath != "" {
-		t.Fatalf("bootstrap data mount = %#v", bootstrapDataMount)
-	}
-
-	hermes := deployment.Spec.Template.Spec.Containers[0]
-	if got := envValue(hermes.Env, "HERMES_HOME"); got != "/opt/data" {
-		t.Fatalf("runtime HERMES_HOME = %q", got)
-	}
-	var runtimeDataMount corev1.VolumeMount
-	for _, mount := range hermes.VolumeMounts {
-		if mount.Name == "data" {
-			runtimeDataMount = mount
-			break
-		}
-	}
-	if runtimeDataMount.MountPath != "/opt/data" || runtimeDataMount.SubPath != "profiles/tina" {
-		t.Fatalf("runtime data mount = %#v", runtimeDataMount)
-	}
-}
-
-func TestHermesLegacyProfileAdoptionRejectsDisposableStorage(t *testing.T) {
-	ctx := context.Background()
-	scheme := testScheme(t)
-	tenant := testTenant()
-	profile := testRuntimeProfile()
-	agent := testAgentIdentity()
-	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionDelete
-	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
-	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
-
-	err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "")
-	if err == nil || !strings.Contains(err.Error(), "requires retained runtime storage") {
-		t.Fatalf("expected retained-storage validation error, got %v", err)
+func TestRetiredLegacyHomeFailsClosedBeforeDeploymentCreation(t *testing.T) {
+	for _, retention := range []string{StorageRetentionRetain, StorageRetentionDelete} {
+		t.Run(retention, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := testScheme(t)
+			tenant := testTenant()
+			profile := testRuntimeProfile()
+			agent := testAgentIdentity()
+			agent.Spec.Runtime.Storage.RetentionPolicy = retention
+			agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			namespace := tenantNamespace(tenant.Name)
+			for i := 0; i < 2; i++ {
+				err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, "", "")
+				if err == nil || !strings.Contains(err.Error(), "adoptLegacyProfile is retired") {
+					t.Fatalf("reconcile %d must fail closed for old stored profile: %v", i, err)
+				}
+			}
+			var deployment appsv1.Deployment
+			err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment)
+			if err == nil {
+				t.Fatal("retired legacy profile created a new Deployment")
+			}
+		})
 	}
 }
 
@@ -451,7 +402,7 @@ func TestHermesPluginBootstrapIsOptionalAndNeverGrantsUnconfiguredHindsight(t *t
 	}
 }
 
-func TestOfficialHermesPluginBootstrapKeepsLegacyProfileAdoption(t *testing.T) {
+func TestOfficialHermesPluginBootstrapRejectsRetiredProfileAdoption(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
@@ -464,23 +415,13 @@ func TestOfficialHermesPluginBootstrapKeepsLegacyProfileAdoption(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	ns := tenantNamespace(tenant.Name)
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, ns, "", ""); err != nil { t.Fatal(err) }
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, ns, "", ""); err == nil ||
+		!strings.Contains(err.Error(), "adoptLegacyProfile is retired") {
+		t.Fatalf("official Hermes plugin must not reactivate legacy profile mounting: %v", err)
+	}
 	var deployment appsv1.Deployment
-	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: ns}, &deployment); err != nil { t.Fatal(err) }
-	bootstrap := deployment.Spec.Template.Spec.InitContainers[1]
-	if envValue(bootstrap.Env, "HERMES_HOME") != "/mnt/txo-data/profiles/tina" {
-		t.Fatalf("retained legacy HERMES_HOME changed: %#v", bootstrap.Env)
-	}
-	if !strings.Contains(bootstrap.Command[2], "requested legacy Hermes profile") {
-		t.Fatal("legacy retained profile guard disappeared")
-	}
-	for _, mount := range bootstrap.VolumeMounts {
-		if strings.HasPrefix(mount.MountPath, "/mnt/txo-data/profiles/tina/") {
-			t.Fatalf("bootstrap plugin mount creates absent retained profile before guard: %#v", mount)
-		}
-	}
-	if deployment.Spec.Template.Spec.Containers[0].VolumeMounts[0].SubPath != "profiles/tina" {
-		t.Fatal("legacy retained PVC subPath changed")
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: ns}, &deployment); err == nil {
+		t.Fatal("retired legacy profile must not create plugin Deployment")
 	}
 }
 
