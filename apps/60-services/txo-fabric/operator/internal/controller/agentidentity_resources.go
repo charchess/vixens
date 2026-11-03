@@ -50,6 +50,11 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	var pvc corev1.PersistentVolumeClaim
 	err = r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
+		// Existing tenants without agentStorage may keep their verified PVC,
+		// but new volumes must never inherit a Hermes runtime-profile class.
+		if tenant.Spec.AgentStorage == nil {
+			return fmt.Errorf("tenant %q requires spec.agentStorage to provision a new agent PVC", tenant.Name)
+		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		pvc = corev1.PersistentVolumeClaim{
