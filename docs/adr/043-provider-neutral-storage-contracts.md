@@ -56,8 +56,13 @@ whose immutable StorageClass reflects its earlier runtime profile is not a
 fresh provisioning path. Its RWO reconcile must verify exact namespace,
 claim name, PVC UID, PV `claimRef` UID and StorageClass before it can maintain
 that existing data. A foreign, unbound or incompletely identified PV fails
-closed without metadata mutation or retroactive adoption. New GitOps tenants
-instead declare `spec.agentStorage` using the two provider-neutral RWO classes.
+closed without metadata mutation or retroactive adoption. All tenants
+provisioning **new** Fabric agent PVCs must declare `spec.agentStorage` with
+explicit provider-neutral retained and disposable RWO classes. Stored tenant
+CRs lacking this field can continue reconciling verified *existing* claims,
+but an absent PVC must fail closed rather than inherit the Hermes runtime
+profile's StorageClass. This protects API-created tenants as well as GitOps
+manifests, without recreating historical stateful data.
 
 No existing PV, PVC, CSI `volumeHandle`, volume attachment, zvol, dataset, target,
 extent, NFS export, or workload is renamed, rebound, adopted, or migrated by this
