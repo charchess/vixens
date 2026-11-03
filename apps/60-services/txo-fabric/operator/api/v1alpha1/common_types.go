@@ -66,10 +66,14 @@ type TenantMemorySpec struct {
 	Hindsight *HindsightMemorySpec `json:"hindsight,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery) && self.migrationRecovery == oldSelf.migrationRecovery)",message="migrationRecovery cannot be changed or removed once declared"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration) && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)",message="migrationRecoveryFailedGeneration cannot be changed or removed once declared"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery) && self.migrationRecovery == oldSelf.migrationRecovery) || (!has(self.migrationRecovery) && !has(self.migrationRecoveryFailedGeneration) && !has(self.migrationRecoveryTransitions) && (!has(self.migrationRetry) || self.migrationRetry == 0))",message="migrationRecovery is immutable except for full retirement with migrationRetry zero"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration) && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration) || (!has(self.migrationRecovery) && !has(self.migrationRecoveryFailedGeneration) && !has(self.migrationRecoveryTransitions) && (!has(self.migrationRetry) || self.migrationRetry == 0))",message="migrationRecoveryFailedGeneration is immutable except for full retirement"
 // +kubebuilder:validation:XValidation:rule="has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)",message="migrationRecovery and migrationRecoveryFailedGeneration must be declared together"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryTransitions) || (has(self.migrationRecoveryTransitions) && self.migrationRecoveryTransitions.size() >= oldSelf.migrationRecoveryTransitions.size() && oldSelf.migrationRecoveryTransitions.all(old, self.migrationRecoveryTransitions.exists(current, current == old)))",message="migrationRecoveryTransitions is append-only"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryTransitions) || (has(self.migrationRecoveryTransitions) && self.migrationRecoveryTransitions.size() >= oldSelf.migrationRecoveryTransitions.size() && oldSelf.migrationRecoveryTransitions.all(old, self.migrationRecoveryTransitions.exists(current, current == old))) || (!has(self.migrationRecovery) && !has(self.migrationRecoveryFailedGeneration) && !has(self.migrationRecoveryTransitions) && (!has(self.migrationRetry) || self.migrationRetry == 0))",message="migrationRecoveryTransitions is append-only except for full retirement"
+// All three incident-only recovery inputs may be retired together with
+// migrationRetry=0 after the controller verifies retained terminal status and
+// exact consumed recovery markers. CEL cannot read status: unsafe early
+// retirement remains explicitly fail-closed in the reconciler.
 type TenantAIGatewaySpec struct {
 	// ProfileRef selects the tenant-facing LiteLLM gateway profile.
 	// +optional
@@ -86,7 +90,7 @@ type TenantAIGatewaySpec struct {
 	// +kubebuilder:validation:Minimum=0
 	MigrationRetry int32 `json:"migrationRetry,omitempty"`
 
-	// MigrationRecovery is a reviewed, immutable recovery identifier for a
+	// MigrationRecovery is a reviewed, immutable-until-retired recovery identifier for a
 	// legacy failed migration whose retained Job evidence was lost before the
 	// UID-bound status contract existed. It permits exactly attempt 1, never
 	// resets an existing attempt history, and is not a recurring operation.
@@ -102,7 +106,7 @@ type TenantAIGatewaySpec struct {
 	// +kubebuilder:validation:Minimum=1
 	MigrationRecoveryFailedGeneration int64 `json:"migrationRecoveryFailedGeneration,omitempty"`
 
-	// MigrationRecoveryTransitions are reviewed, immutable recovery admissions
+	// MigrationRecoveryTransitions are reviewed, immutable-until-retired recovery admissions
 	// for a specific retained EvidenceMissing migration record. Entries are
 	// append-only: each request names the tenant, exact prior attempt and UID,
 	// and one unique identifier; it cannot repair or replace historical status.
