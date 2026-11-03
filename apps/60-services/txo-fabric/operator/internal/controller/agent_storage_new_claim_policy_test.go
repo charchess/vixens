@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,8 +24,9 @@ func TestMissingTenantStoragePolicyCannotProvisionNewAgentPVC(t *testing.T) {
 			profile := testRuntimeProfile()
 			profile.Spec.Storage.StorageClassName = "profile-only-class"
 			namespace := tenantNamespace(tenant.Name)
-			c := fake.NewClientBuilder().WithScheme(testScheme(t)).Build()
-			r := &AgentIdentityReconciler{Client: c, Scheme: testScheme(t)}
+			scheme := testScheme(t)
+			c := fake.NewClientBuilder().WithScheme(scheme).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
 			for attempt := 0; attempt < 2; attempt++ {
 				err := r.ensurePVC(ctx, agent, tenant, profile, namespace)
@@ -83,6 +83,3 @@ func TestMissingTenantStoragePolicyKeepsExistingAgentPVC(t *testing.T) {
 	}
 }
 
-// Compile-time fixture shape: this compatibility contract applies to arbitrary
-// tenants; it is not gated by the hAIrem or Indiba identity.
-var _ *fabricv1alpha1.TenantBundle
