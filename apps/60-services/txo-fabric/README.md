@@ -257,11 +257,11 @@ right class from the start, without a post-provisioning protection gap.
 This policy does **not** silently replace existing PVCs: an existing durable
 PVC on its historical runtime-profile StorageClass is accepted and its
 concrete PV reclaim policy promoted to Retain as needed. Incompatible foreign
-classes fail closed; disposable PVCs are never quietly reassigned. Legacy
-tenants without `spec.agentStorage` preserve the old profile-based storage
-selection during migration. This legacy fallback is not the recommended model
-for newly onboarded tenants. Do not delete or recreate any existing PVC merely
-by moving the Hermes release pointer.
+classes fail closed; disposable PVCs are never quietly reassigned. Tenants
+without `spec.agentStorage` retain the existing profile-based StorageClass
+fallback for stored-object compatibility. New tenants should declare the
+tenant-owned two-class policy explicitly. Do not delete or recreate an
+existing PVC merely by moving a Hermes release pointer.
 
 For a bound `Retain` runtime PVC, the operator also promotes the concrete
 PersistentVolume reclaim policy to `Retain`. This is the backend-safety contract:
@@ -327,27 +327,22 @@ Hindsight bank identity is part of the AgentIdentity contract. When tenant memor
 is configured, the operator exposes the resolved bank through the tenant-scoped
 Hindsight service while PostgreSQL remains hidden behind Hindsight from the agent.
 
-## Historical brownfield cutover
+## Existing stateful data compatibility
 
-The now-retired hAIrem sandbox was the first brownfield validation path. The
-temporary Kyverno provisioning policies were retired first, leaving the historical
-Tesla, Tina and Tiffa runtime resources ownerless so the authoritative operator
-could prove adoption through the new CR contract.
+New agents use the canonical `hermes-<agentKey>-data` PVC mounted flat at
+`/opt/data`; there is no CSI migration or named-profile adoption step in
+normal tenant onboarding. Native storage is reconciled from the tenant's
+`spec.agentStorage` policy and the agent's immutable
+`runtime.storage.retentionPolicy`.
 
-This section records that migration mechanism; it is not the current Client0
-population or an onboarding recipe for new tenants.
-
-PVC adoption is deliberately non-destructive. Deployment adoption may cause one
-controlled `Recreate` rollout when the operator normalizes the old POC Deployment
-spec, but the existing workspace PVC must retain its identity and data.
-
-The historical `runtime.storage.adoptLegacyProfile` flag is retained only
-as a stored-CR compatibility sentinel. The current reconciler refuses
-`true` rather than silently selecting the wrong data root. New agents
-always use the native flat `/opt/data` mount and canonical PVC provisioning.
-Existing flagged CRs require a separately reviewed data transition before
-promoting this controller to the affected cluster; no PVC is copied or deleted
-by this source change.
+Stored CRs carrying the retired `runtime.storage.adoptLegacyProfile: true`
+flag are rejected **fail-closed** by the controller. Their status and physical
+PVC data must not be silently rewritten, pruned, remounted or assumed migrated.
+For this exceptional case, use
+[the retained-Hermes state recovery procedure](../../../../docs/guides/txo-fabric-hermes-state-recovery.md)
+and [ADR-044](../../../../docs/adr/044-fabric-durable-active-volume-bindings.md).
+Historical CSI copy and adoption evidence belongs in incident/issue records,
+not the ordinary creation or reconciliation contract.
 
 ## Zero-tenant acceptance
 
