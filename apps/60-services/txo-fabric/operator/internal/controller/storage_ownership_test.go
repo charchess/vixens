@@ -77,7 +77,7 @@ func TestRetainedPVCExistingOwnerRemovedBeforeAgentDeletion(t *testing.T) {
 func TestDisposablePVCKeepsControllerOwnership(t *testing.T) {
 	ctx:=context.Background()
 	scheme:=testScheme(t)
-	tenant:=testTenant()
+	tenant:=configuredAgentStorageTenant()
 	agent:=testStorageIdentity(tenant.Name, "probe", StorageRetentionDelete)
 	profile:=testRuntimeProfile()
 	ns:=tenantNamespace(tenant.Name)
