@@ -30,6 +30,9 @@ jobs:
             k8s:
               - 'apps/**'
               - 'argocd/**'
+              # The native storage admission test itself must not evade its
+              # execution gate when only its Python implementation changes.
+              - 'scripts/validation/tests/test_fabric_native_storage_declarations.py'
               - '.github/workflows/**'
               - '.github/actions/setup-yaml-tools/**'
               - 'yamllint-config.yml'
