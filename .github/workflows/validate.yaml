@@ -371,6 +371,8 @@ jobs:
 
       - name: Regression — official Synelia CSI safety gates
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_synelia_csi_source.py' -v
+      - name: Regression — native Fabric storage declarations (offline)
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_native_storage_declarations.py' -v
       - name: Regression — portable Fabric tenant LiteLLM declarations (offline)
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_native_ai_gateway_declarations.py' -v
       - name: Regression — Fabric RWX production acceptance (offline)
