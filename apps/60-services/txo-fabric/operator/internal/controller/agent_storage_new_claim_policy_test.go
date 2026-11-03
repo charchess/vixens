@@ -60,7 +60,7 @@ func TestMissingTenantStoragePolicyKeepsExistingAgentPVC(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, UID: uid},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 		},
 	}
 	pvc.Labels = agentLabels(agent, tenant)
