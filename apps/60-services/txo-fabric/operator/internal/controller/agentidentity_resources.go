@@ -97,14 +97,20 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	}
 	actualClass := valueOrEmpty(pvc.Spec.StorageClassName)
 	if actualClass != storageClass {
-		// An existing Retain claim may retain its immutable profile-selected
-		// StorageClass only with a verified exact PVC/PV binding below. New
-		// claims always use the tenant policy; no CSI or class remapping occurs.
-		boundRetainedWithProfileClass := tenant.Spec.AgentStorage != nil &&
-			storageRetentionPolicy(agent) == StorageRetentionRetain &&
-			actualClass == profile.Spec.Storage.StorageClassName &&
-			pvc.UID != "" && pvc.Spec.VolumeName != ""
-		if !boundRetainedWithProfileClass {
+		// An existing Retain claim may keep its immutable StorageClass even
+		// after a Hermes profile change. This is not authorization to adopt
+		// an unbound claim: the exact PVC UID and PV claimRef are verified below.
+		// With an explicit tenant policy, only the previously profile-selected
+		// class may differ; stored tenants without a policy cannot derive a
+		// stable historical class from the current, mutable runtime profile.
+		verifiedRetainedCandidate := storageRetentionPolicy(agent) == StorageRetentionRetain &&
+			actualClass != "" && pvc.UID != "" && pvc.Spec.VolumeName != "" &&
+			pvc.Status.Phase == corev1.ClaimBound
+		if tenant.Spec.AgentStorage != nil {
+			verifiedRetainedCandidate = verifiedRetainedCandidate &&
+				actualClass == profile.Spec.Storage.StorageClassName
+		}
+		if !verifiedRetainedCandidate {
 			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
 		}
 	}

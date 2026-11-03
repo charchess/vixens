@@ -59,9 +59,13 @@ that existing data. A foreign, unbound or incompletely identified PV fails
 closed without metadata mutation or retroactive adoption. All tenants
 provisioning **new** Fabric agent PVCs must declare `spec.agentStorage` with
 explicit provider-neutral retained and disposable RWO classes. Stored tenant
-CRs lacking this field can continue reconciling verified *existing* claims,
-but an absent PVC must fail closed rather than inherit the Hermes runtime
-profile's StorageClass. This protects API-created tenants as well as GitOps
+CRs lacking this field can continue reconciling verified *existing* claims.
+A Bound Retain PVC with an exact tenant/agent identity, PVC UID, PV claimRef
+and matching immutable PVC/PV StorageClass remains valid even if a later
+Hermes runtime profile declares a different StorageClass. An unbound claim
+or an incomplete/foreign PV identity fails closed; the current runtime
+profile cannot authorize replacement of preserved state. An absent PVC
+must fail closed rather than inherit the Hermes runtime profile's StorageClass. This protects API-created tenants as well as GitOps
 manifests, without recreating historical stateful data.
 
 No existing PV, PVC, CSI `volumeHandle`, volume attachment, zvol, dataset, target,
