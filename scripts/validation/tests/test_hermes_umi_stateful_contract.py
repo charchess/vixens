@@ -80,6 +80,23 @@ def check_stateful_source(app: dict, pvc: dict, deployment: dict, overlay: dict)
         raise AssertionError("Hermes private home is not mounted at /opt/data")
 
 
+# Historical recovery descriptions belong in the archived issue, not
+# current deployable manifests that define the retained steady state.
+OBSOLETE_CUTOVER_NARRATIVE = (
+    "Incident #4185",
+    "temporary data-copy Pod",
+    "PVC is staged",
+    "staged migrations",
+    "copy-first migrations",
+)
+
+
+def assert_current_stateful_manifest_narrative(content: str) -> None:
+    for phrase in OBSOLETE_CUTOVER_NARRATIVE:
+        if phrase in content:
+            raise AssertionError("active stateful manifests must not describe an ongoing CSI cutover")
+
+
 class HermesUMIStatefulSourceTests(unittest.TestCase):
     def setUp(self):
         self.app = yaml.safe_load(ARGO_APP.read_text(encoding="utf-8"))
@@ -97,6 +114,20 @@ class HermesUMIStatefulSourceTests(unittest.TestCase):
 
     def test_exact_existing_retained_data_source(self):
         self.assert_contract()
+
+    def test_active_manifests_describe_current_state_not_historical_cutover(self):
+        for path in (ARGO_APP, BASE / "pvc.yaml"):
+            with self.subTest(path=path.name):
+                assert_current_stateful_manifest_narrative(path.read_text(encoding="utf-8"))
+
+    def test_old_cutover_narrative_fails_closed(self):
+        for phrase in OBSOLETE_CUTOVER_NARRATIVE:
+            with self.subTest(phrase=phrase), self.assertRaises(AssertionError):
+                assert_current_stateful_manifest_narrative("  # " + phrase + "\\n")
+        assert_current_stateful_manifest_narrative(
+            "  # Preserve active data and require physical acceptance before automation."
+        )
+
 
     def test_arbitrary_automated_sync_and_destructive_options_fail_closed(self):
         for mutation in (
