@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -19,6 +19,8 @@ func TestMissingTenantStoragePolicyCannotProvisionNewAgentPVC(t *testing.T) {
 		t.Run(retention, func(t *testing.T) {
 			ctx := context.Background()
 			tenant := testTenant()
+	tenant.Name = "generic-existing-client"
+			tenant.Name = "generic-new-client"
 			tenant.Spec.AgentStorage = nil
 			agent := testStorageIdentity(tenant.Name, "fresh-agent", retention)
 			profile := testRuntimeProfile()
