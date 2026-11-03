@@ -7,6 +7,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 import yaml
 
@@ -293,6 +294,51 @@ class InfraTransitSourceContractTests(unittest.TestCase):
             guard.LEGACY_INFRA_STORE,
             "apps/00-infra/openbao/base/cluster-secret-store.yaml",
         )
+
+
+class SourceChangeScopeTests(unittest.TestCase):
+    """Historical CSI path exceptions must not determine OpenBao source safety."""
+
+    @staticmethod
+    def check_paths(paths):
+        with tempfile.TemporaryDirectory() as directory:
+            render = Path(directory) / "prod.yaml"
+            render.write_text("kind: StatefulSet\nmetadata:\n  name: openbao-fabric\n", encoding="utf-8")
+            with (
+                mock.patch.object(guard, "changed_paths", return_value=list(paths)),
+                mock.patch.object(guard, "git", return_value=""),
+            ):
+                return guard.validate("origin/main", "HEAD", render)
+
+    def test_independent_storage_change_has_no_legacy_exception_requirement(self):
+        errors = self.check_paths(["apps/60-services/actual-budget/base/pvc.yaml"])
+        self.assertEqual(errors, [], errors)
+
+    def test_protected_operator_edit_cannot_ride_on_unrelated_storage_change(self):
+        errors = self.check_paths([
+            "apps/60-services/actual-budget/base/pvc.yaml",
+            "apps/60-services/txo-fabric/operator/config/manager/manager.yaml",
+        ])
+        self.assertTrue(any("protected live GitOps/consumer path changed" in e for e in errors), errors)
+
+    def test_exact_retained_prod_claim_still_requires_existing_source_safety(self):
+        errors = self.check_paths([
+            "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml",
+        ])
+        self.assertEqual(errors, [], errors)
+
+    def test_regular_openbao_change_requires_infra_contract(self):
+        errors = self.check_paths([
+            "apps/60-services/txo-fabric/openbao-fabric/base/statefulset.yaml",
+        ])
+        self.assertIn("Infra Transit source contract directory missing", errors)
+
+    def test_paired_openbao_and_infra_contract_can_pass_source_guard(self):
+        errors = self.check_paths([
+            "apps/60-services/txo-fabric/openbao-fabric/base/statefulset.yaml",
+            guard.INFRA_POLICY,
+        ])
+        self.assertEqual(errors, [], errors)
 
 
 class CanonicalTenantProvisioningContractTests(unittest.TestCase):
