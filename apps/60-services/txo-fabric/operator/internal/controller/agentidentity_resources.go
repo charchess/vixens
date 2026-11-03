@@ -19,8 +19,9 @@ import (
 )
 
 // desiredAgentPVCStorageClass is selected independently of the Hermes image,
-// runtime profile channel or releaseRef. The profile fallback serves only
-// legacy tenants that have not opted into tenant-owned storage.
+// runtime profile channel or releaseRef for tenants with an explicit policy.
+// The runtime-profile class is accepted only for already-existing verified
+// claims belonging to stored tenant CRs without an agentStorage policy.
 func desiredAgentPVCStorageClass(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile) (string, error) {
 	if tenant.Spec.AgentStorage == nil {
 		return profile.Spec.Storage.StorageClassName, nil
