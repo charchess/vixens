@@ -13,9 +13,11 @@ type AgentRuntimeStorageBinding struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// AdoptLegacyProfile non-destructively presents an existing retained
-	// profiles/<agentKey> directory as the runtime's single /opt/data home.
-	// It is a brownfield cutover switch: no profile copy or flattening occurs.
+	// AdoptLegacyProfile is a deprecated, stored-CR compatibility sentinel.
+	// True is rejected by the current reconciler before PVC/deployment mutation:
+	// removing it from an existing CR could silently substitute a different
+	// runtime home. Keep this API field readable until old CRs have received
+	// an explicitly reviewed data transition; new tenants must leave it unset.
 	// +optional
 	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
 }
