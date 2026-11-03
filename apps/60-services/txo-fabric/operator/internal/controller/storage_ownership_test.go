@@ -204,3 +204,50 @@ func TestLegacyProfileCannotAdoptPendingClaim(t *testing.T) {
 	}
 }
 
+
+
+func TestRetiredLegacyProfileCannotMutateExistingBoundPVC(t *testing.T) {
+	for _, tenantName := range []string{"fabric-a", "fabric-b"} {
+		t.Run(tenantName, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := testScheme(t)
+			tenant := testTenant()
+			tenant.Name = tenantName
+			tenant.Spec.TenantID = "TEN-" + tenantName
+			agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
+			agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+			profile := testRuntimeProfile()
+			ns := tenantNamespace(tenant.Name)
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns,
+					UID: types.UID("retained-claim-" + tenantName),
+					Labels: agentLabels(agent, tenant),
+				},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+					VolumeName: "existing-pv-" + tenantName,
+				},
+				Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound},
+			}
+			pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			for i := 0; i < 2; i++ {
+				if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err == nil {
+					t.Fatal("retired legacy layout must reject even a Bound retained claim")
+				}
+			}
+			var after corev1.PersistentVolumeClaim
+			if err := c.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: ns}, &after); err != nil {
+				t.Fatal(err)
+			}
+			if after.UID != pvc.UID || after.Spec.VolumeName != pvc.Spec.VolumeName ||
+				after.Status.Phase != corev1.ClaimBound ||
+				after.Labels[LabelStorageRetention] != StorageRetentionRetain {
+				t.Fatalf("stored retained PVC changed during rejected reconciliation: %#v", after)
+			}
+		})
+	}
+}
