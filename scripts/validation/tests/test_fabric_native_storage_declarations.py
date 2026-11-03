@@ -1,7 +1,8 @@
 """Guard the declarative Fabric tenant baseline against obsolete CSI cutover inputs.
 
 The API may still decode stored legacy CRs for compatibility, but GitOps must
-not request a historical copy/cutover or legacy-profile adoption. This is a
+not request a historical copy/cutover or legacy-profile adoption, even as
+an explicit false compatibility field. This is a
 source-only contract and never contacts a Kubernetes cluster.
 """
 
@@ -33,7 +34,7 @@ def assert_native_storage_declaration(document: dict) -> None:
     elif kind == "AgentIdentity":
         storage = ((spec.get("runtime") or {}).get("storage") or {})
         forbidden = {"migration"} & storage.keys()
-        if forbidden or storage.get("adoptLegacyProfile") is True:
+        if forbidden or "adoptLegacyProfile" in storage:
             raise AssertionError("AgentIdentity runtime storage requests historical CSI cutover/adoption")
 
 
@@ -92,7 +93,7 @@ class NativeFabricStorageSourceTests(unittest.TestCase):
                 assert_native_storage_declaration({"kind": "TenantBundle", "spec": {"workspace": {field: value}}})
 
     def test_rejects_old_agent_cutover_and_profile_adoption(self):
-        for storage in ({"migration": {"cutover": True}}, {"adoptLegacyProfile": True}):
+        for storage in ({"migration": {"cutover": True}}, {"adoptLegacyProfile": True}, {"adoptLegacyProfile": False}):
             with self.subTest(storage=storage), self.assertRaises(AssertionError):
                 assert_native_storage_declaration({"kind": "AgentIdentity", "spec": {"runtime": {"storage": storage}}})
 
