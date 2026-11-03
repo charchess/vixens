@@ -512,6 +512,63 @@ class PrivatePOCTests(unittest.TestCase):
     def test_exact_private_poc(self):
         self.assertEqual(poc.check_render(self.fixture()), [])
 
+    @staticmethod
+    def retained_prod_fixture():
+        """Model the existing production Kustomize JSON patch, without cluster calls."""
+        docs = copy.deepcopy(PrivatePOCTests.fixture())
+        root = POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod"
+        patch = yaml.safe_load((root / "storage/retained-statefulset-volume.yaml").read_text())
+        claim = yaml.safe_load((root / "storage/retained-pvc.yaml").read_text())
+        sts = next(d for d in docs if d["kind"] == "StatefulSet")
+        assert [(step["op"], step["path"]) for step in patch] == [
+            ("remove", "/spec/volumeClaimTemplates"),
+            ("add", "/spec/template/spec/volumes/-"),
+        ]
+        del sts["spec"]["volumeClaimTemplates"]
+        sts["spec"]["template"]["spec"]["volumes"].append(patch[1]["value"])
+        docs.append(claim)
+        return docs
+
+    def test_native_and_retained_prod_are_distinct_exact_contracts(self):
+        native = self.fixture()
+        retained = self.retained_prod_fixture()
+        self.assertEqual(poc.check_render(native), [])
+        self.assertEqual(poc.check_render(retained, retained_prod=True), [])
+        self.assertTrue(poc.check_render(retained),
+                        "native render must reject the extra historical retained PVC")
+        self.assertTrue(poc.check_render(native, retained_prod=True),
+                        "prod render must reject a newly provisioned empty template")
+
+    def test_retained_prod_refuses_hybrid_empty_or_wrong_binding(self):
+        cases = (
+            "native-template", "missing-claim", "wrong-claim-name",
+            "wrong-volume", "scaled-down", "unsafe-annotation",
+        )
+        for case in cases:
+            with self.subTest(case=case):
+                docs = self.retained_prod_fixture()
+                sts = next(d for d in docs if d["kind"] == "StatefulSet")
+                data = next(v for v in sts["spec"]["template"]["spec"]["volumes"]
+                            if v["name"] == "data")
+                claim = next(d for d in docs if d["kind"] == "PersistentVolumeClaim")
+                if case == "native-template":
+                    native_sts = next(d for d in self.fixture() if d["kind"] == "StatefulSet")
+                    sts["spec"]["volumeClaimTemplates"] = native_sts["spec"]["volumeClaimTemplates"]
+                elif case == "missing-claim":
+                    docs.remove(claim)
+                elif case == "wrong-claim-name":
+                    claim["metadata"]["name"] = "unrelated-volume"
+                elif case == "wrong-volume":
+                    data["persistentVolumeClaim"]["claimName"] = "data-openbao-fabric-0"
+                elif case == "scaled-down":
+                    sts["spec"]["replicas"] = 0
+                elif case == "unsafe-annotation":
+                    claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"] = "Prune=true,Delete=true"
+                self.assertTrue(
+                    poc.check_render(docs, retained_prod=True),
+                    "retained production data contract silently accepted " + case,
+                )
+
     def test_only_recovered_pvc_may_disable_argo_prune_delete(self):
         claim = yaml.safe_load((POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml").read_text())
         self.assertNotIn("unsafe Argo sync-option annotation in Fabric resource", poc.check_render(self.fixture() + [claim]))
