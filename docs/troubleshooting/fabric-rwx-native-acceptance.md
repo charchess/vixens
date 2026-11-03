@@ -26,7 +26,8 @@ The program performs **only** `kubectl get pvc`/`pv`/`pods -o json`,
 without inspecting any Secret or reading files on the PVCs. It derives
 canonical names from hAIrem and Indiba's declared workspace scopes (no
 hardcoded physical PVC identities), checks ownership, namespace and exact
-PVC UID→PV claimRef linkage, StorageClass, CSI and Retain, checks pod mounts
+PVC UID→PV claimRef linkage, StorageClass, the exact production Synelia CSI
+driver declared in `apps/01-storage/synelia-csi/prod/values.yaml`, and Retain; it also checks pod mounts
 and read-only reference scopes, and reports lingering legacy claim names
 without deleting them. Offline unit tests use synthetic PVC/PV/Pod JSON.
 

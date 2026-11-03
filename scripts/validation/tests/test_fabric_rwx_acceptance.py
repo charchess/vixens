@@ -42,7 +42,7 @@ def inventory(tenant):
                         "spec": {"claimRef": {"name": name, "namespace": ns, "uid": uid},
                                  "storageClassName": mod.STORAGE_CLASS,
                                  "persistentVolumeReclaimPolicy": "Retain",
-                                 "csi": {"driver": "test.csi.example"}}})
+                                 "csi": {"driver": mod.EXPECTED_CSI_DRIVER}}})
         volumes.append({"name": name, "persistentVolumeClaim": {"claimName": name}})
     pod = {"metadata": {"name": "agent-one"},
            "spec": {"volumes": volumes,
@@ -79,6 +79,14 @@ class FabricRWXAcceptanceTests(unittest.TestCase):
     def test_uid_substitution_fails_closed(self):
         self.snapshot["pvs"][0]["spec"]["claimRef"]["uid"] = "different"
         self.check("PV_CLAIMREF_MISMATCH")
+
+    def test_foreign_csi_driver_fails_even_with_matching_pvc_binding(self):
+        self.snapshot["pvs"][0]["spec"]["csi"]["driver"] = "retired.csi.example"
+        self.check("PV_WRONG_CSI_DRIVER")
+
+    def test_missing_csi_driver_fails_closed(self):
+        self.snapshot["pvs"][0]["spec"].pop("csi")
+        self.check("PV_WRONG_CSI_DRIVER")
 
     def test_cross_tenant_ref_fails_closed(self):
         self.snapshot["pvs"][0]["spec"]["claimRef"]["namespace"] = "tenant-foreign"

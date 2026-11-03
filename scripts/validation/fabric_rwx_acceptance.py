@@ -20,6 +20,9 @@ ROOT = Path(__file__).resolve().parents[2]
 TENANTS = ("hairem", "indiba")
 LABEL = "fabric.truxonline.io/"
 STORAGE_CLASS = "storage-rwx-retain"
+# Read the declared production CSI identity, not a migration-era or test driver.
+CSI_VALUES = ROOT / "apps/01-storage/synelia-csi/prod/values.yaml"
+EXPECTED_CSI_DRIVER = yaml.safe_load(CSI_VALUES.read_text(encoding="utf-8"))["driverName"]
 
 
 def expected_claims(bundle):
@@ -143,8 +146,10 @@ def evaluate(bundles, snapshot):
                 add("FAIL", "PV_NOT_RETAIN", ns, name)
             if pv.get("spec", {}).get("storageClassName") != STORAGE_CLASS:
                 add("FAIL", "PV_WRONG_CLASS", ns, name)
-            if not pv.get("spec", {}).get("csi", {}).get("driver"):
-                add("FAIL", "PV_NOT_CSI", ns, name)
+            actual_driver = pv.get("spec", {}).get("csi", {}).get("driver")
+            if actual_driver != EXPECTED_CSI_DRIVER:
+                add("FAIL", "PV_WRONG_CSI_DRIVER", ns, name,
+                    f"expected {EXPECTED_CSI_DRIVER}, got {actual_driver or '<none>'}")
             if not usage[name]:
                 add("PENDING", "NO_OBSERVED_CONSUMER", ns, name)
         for name in pvcs:
