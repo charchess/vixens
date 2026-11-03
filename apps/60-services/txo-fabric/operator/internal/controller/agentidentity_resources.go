@@ -19,8 +19,9 @@ import (
 )
 
 // desiredAgentPVCStorageClass is selected independently of the Hermes image,
-// runtime profile channel or releaseRef. The profile fallback serves only
-// legacy tenants that have not opted into tenant-owned storage.
+// runtime profile channel or releaseRef for tenants with an explicit policy.
+// The runtime-profile class is accepted only for already-existing verified
+// claims belonging to stored tenant CRs without an agentStorage policy.
 func desiredAgentPVCStorageClass(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile) (string, error) {
 	if tenant.Spec.AgentStorage == nil {
 		return profile.Spec.Storage.StorageClassName, nil
@@ -50,6 +51,11 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	var pvc corev1.PersistentVolumeClaim
 	err = r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
+		// Existing tenants without agentStorage may keep their verified PVC,
+		// but new volumes must never inherit a Hermes runtime-profile class.
+		if tenant.Spec.AgentStorage == nil {
+			return fmt.Errorf("tenant %q requires spec.agentStorage to provision a new agent PVC", tenant.Name)
+		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		pvc = corev1.PersistentVolumeClaim{
