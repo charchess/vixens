@@ -27,7 +27,7 @@ import (
 func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
-	tenant := testTenant()
+	tenant := configuredAgentStorageTenant()
 	profile := testRuntimeProfile()
 	agent := &fabricv1alpha1.AgentIdentity{
 		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox-tina"},
@@ -160,7 +160,11 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-data", Namespace: ns.Name}, &pvc); err != nil {
 		t.Fatalf("runtime PVC not reconciled: %v", err)
 	}
-	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "storage-rwo-delete" {
+	wantClass := tenant.Spec.AgentStorage.RetainedStorageClassName
+	if storageRetentionPolicy(agent) == StorageRetentionDelete {
+		wantClass = tenant.Spec.AgentStorage.DisposableStorageClassName
+	}
+	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != wantClass {
 		t.Fatalf("unexpected storage class: %#v", pvc.Spec.StorageClassName)
 	}
 
