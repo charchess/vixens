@@ -1487,3 +1487,134 @@ func TestAIGatewayMigrationRecoveryTransitionFailsClosedWhenSuccessorJobDisappea
 		t.Fatalf("missing successor Job must fail closed: ready=%v reason=%q err=%v", ready, reason, err)
 	}
 }
+
+
+func TestAIGatewayRetiredRecoveryKeepsTerminalEvidenceWithoutJobReplay(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		tenantName string
+		tenantID string
+		missingAttempt int32
+		latestPhase fabricv1alpha1.AIGatewayMigrationPhase
+		markerMode string
+		wantReady bool
+	}{
+		{name: "independent tenant terminal recovery", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationSucceeded, markerMode: "valid", wantReady: true},
+		{name: "another tenant terminal recovery from attempt one", tenantName: "another", tenantID: "TEN90081", missingAttempt: 1, latestPhase: fabricv1alpha1.AIGatewayMigrationSucceeded, markerMode: "valid", wantReady: true},
+		{name: "missing consumed marker", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationSucceeded, markerMode: "missing"},
+		{name: "foreign consumed marker", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationSucceeded, markerMode: "foreign"},
+		{name: "wrong marker data", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationSucceeded, markerMode: "wrong-uid"},
+		{name: "pending successor", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationPending, markerMode: "valid"},
+		{name: "failed successor", tenantName: "customer", tenantID: "TEN90080", missingAttempt: 0, latestPhase: fabricv1alpha1.AIGatewayMigrationFailed, markerMode: "valid"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := postgresqlTestScheme(t)
+			tenant := aiGatewayTestTenant(tc.tenantName, tc.tenantID)
+			transition := recoveryTransition("reviewed-retirement", tc.tenantID, tc.missingAttempt, "lost-uid")
+			tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{
+				MigrationRetry: tc.missingAttempt + 1,
+				MigrationRecoveryTransitions: []fabricv1alpha1.AIGatewayMigrationRecoveryTransition{transition},
+			}
+			tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{
+				{Attempt: tc.missingAttempt, JobName: "lost-job", JobUID: "lost-uid", Phase: fabricv1alpha1.AIGatewayMigrationEvidenceMissing},
+				{Attempt: tc.missingAttempt + 1, JobName: "completed-job", JobUID: "completed-uid", Phase: tc.latestPhase},
+			}
+			c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant).Build()
+			r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+			if tc.markerMode != "missing" {
+				ok, err := r.consumeAIGatewayMigrationRecoveryTransition(ctx, tenant, &transition)
+				if err != nil || !ok {
+					t.Fatalf("create exact consumption marker: created=%v err=%v", ok, err)
+				}
+				key := types.NamespacedName{
+					Namespace: tenantNamespace(tenant.Name),
+					Name: aiGatewayMigrationRecoveryTransitionMarkerName(tenant, &transition),
+				}
+				var marker corev1.ConfigMap
+				if err := c.Get(ctx, key, &marker); err != nil {
+					t.Fatal(err)
+				}
+				if tc.markerMode == "foreign" {
+					marker.OwnerReferences[0].UID = types.UID("foreign-owner")
+				}
+				if tc.markerMode == "wrong-uid" {
+					marker.Data["expectedJobUID"] = "foreign-uid"
+				}
+				if err := c.Update(ctx, &marker); err != nil {
+					t.Fatal(err)
+				}
+			}
+			// This is the exact target spec of a retired incident-only request.
+			// It has no retry ordinal, historical marker UID or migration epoch.
+			tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{}
+			profile, postgresql := aiGatewayTestProfile(), aiGatewayPostgreSQLTestProfile()
+			secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+			for pass := 0; pass < 2; pass++ {
+				ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if ready != tc.wantReady {
+					t.Fatalf("pass %d ready=%v reason=%q want=%v", pass, ready, reason, tc.wantReady)
+				}
+				if tc.wantReady && reason != "MigrationReady" {
+					t.Fatalf("pass %d unexpected success reason: %q", pass, reason)
+				}
+				if !tc.wantReady && reason != "MigrationEvidenceMissing" {
+					t.Fatalf("pass %d must fail closed without exact completed recovery: %q", pass, reason)
+				}
+				if len(tenant.Status.AIGatewayMigration) != 2 ||
+					tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationEvidenceMissing ||
+					tenant.Status.AIGatewayMigration[1].JobUID != "completed-uid" {
+					t.Fatalf("pass %d historical evidence mutated: %#v", pass, tenant.Status.AIGatewayMigration)
+				}
+				var jobs batchv1.JobList
+				if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name))); err != nil {
+					t.Fatal(err)
+				}
+				if len(jobs.Items) != 0 {
+					t.Fatalf("pass %d retired request replayed migration Jobs: %d", pass, len(jobs.Items))
+				}
+			}
+		})
+	}
+}
+
+func TestAIGatewayRetiredRetryWithoutRecoveryMarkerRequiresSucceededHistory(t *testing.T) {
+	for _, phase := range []fabricv1alpha1.AIGatewayMigrationPhase{
+		fabricv1alpha1.AIGatewayMigrationSucceeded,
+		fabricv1alpha1.AIGatewayMigrationFailed,
+		fabricv1alpha1.AIGatewayMigrationPending,
+	} {
+		t.Run(string(phase), func(t *testing.T) {
+			ctx := context.Background()
+			tenant := aiGatewayTestTenant("retired", "TEN90100")
+			tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{}
+			tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{
+				{Attempt: 0, JobName: "first", JobUID: "uid-0", Phase: fabricv1alpha1.AIGatewayMigrationFailed},
+				{Attempt: 1, JobName: "second", JobUID: "uid-1", Phase: phase},
+			}
+			scheme := postgresqlTestScheme(t)
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+			r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+			ready, _, _, err := r.ensureAIGatewayMigrations(ctx, tenant,
+				aiGatewayTestProfile(), aiGatewayPostgreSQLTestProfile(),
+				&corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "db-uid"}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if ready != (phase == fabricv1alpha1.AIGatewayMigrationSucceeded) {
+				t.Fatalf("retired retry phase=%s ready=%v", phase, ready)
+			}
+			var jobs batchv1.JobList
+			if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name))); err != nil {
+				t.Fatal(err)
+			}
+			if len(jobs.Items) != 0 {
+				t.Fatal("retired retry must not replay any Job")
+			}
+		})
+	}
+}
+
