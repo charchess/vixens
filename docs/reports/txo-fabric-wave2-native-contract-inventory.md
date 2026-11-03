@@ -1,14 +1,14 @@
 # TXO Fabric — Wave 2 native-contract inventory (source checkpoint)
 
-**Scope:** issue #4386; source-only inventory refreshed after merged PRs #4429, #4431, #4433, #4434, #4436 and #4437 on 2026-11-02. This is a classification and follow-up gate, **not** evidence of live state, data-copy integrity, or a clean-cluster test. Source-of-truth issues: #4387, #4398, #4406, #4357.
+**Scope:** issue #4386; source inventory refreshed on 2026-11-03 after merged #4451, #4453, #4454 and #4455. This is a classification and follow-up gate, **not** evidence of live state, data-copy integrity, or a clean-cluster test. Source-of-truth issues: #4387, #4398, #4406, #4357.
 
 | Surface / source | Observed active contract | Classification | Safe next action / gate |
 |---|---|---|---|
 | `operator/internal/controller/sharedworkspace_controller.go` | Creates canonical RWX PVCs from declared tenant scopes, using SharedWorkspaceProfile's StorageClass; existing claims require matching ownership labels and access mode | **Native product contract** | Keep. #4398 must prove clean-room provisioning, repeat reconcile and cross-tenant refusal |
 | `tenants/hairem/tenantbundle.yaml` | Workspace scopes and `shared-nfs` profile, no `claimSuffix` or workspace migration block | **Native desired state** | Keep. Profile name is historical terminology, not in itself a CSI migration gate |
 | `tenants/indiba/tenantbundle.yaml` | Workspace scopes and `shared-nfs` profile, no `claimSuffix` or workspace migration block | **Native desired state** | Keep; same clean-room gates |
-| `tenants/hairem/tenantbundle.yaml` / `aiGateway` | `migrationRetry: 2`, `migrationRecovery: legacy-evidence-20261016`, `migrationRecoveryFailedGeneration: 9`, transition `hairem-evidence-missing-20261031` with a historical Job UID | **Incident-specific recovery authorization embedded in active desired state** | #4387: require read-only *stored CR/status* evidence and admission/immutability review before changing or deleting. Never simply remove these fields from a live immutable CR |
-| `tenants/indiba/tenantbundle.yaml` / `aiGateway` | `migrationRetry: 1`, transition `indiba-evidence-missing-20261031` with historical Job UID | **Incident-specific recovery authorization embedded in active desired state** | Same #4387 gate; do not infer terminal recovery from successful CI |
+| `tenants/hairem/tenantbundle.yaml` / `aiGateway` | Only native `profileRef: litellm-standard`; incident retry, failed generation, transition and historical Job UID removed in merged #4454 | **Native desired state (separate LiteLLM lifecycle)** | Preserve source regression `test_fabric_native_ai_gateway_declarations.py`; retained historic status and operator fail-closed remain #4387 |
+| `tenants/indiba/tenantbundle.yaml` / `aiGateway` | Only native `profileRef: litellm-standard`; no historical recovery declaration since #4454 | **Native desired state (separate LiteLLM lifecycle)** | Same #4387 terminal evidence/runtime gate; source merge does not attest old Job completion |
 | `operator/internal/controller/tenantbundle_ai_gateway_postgresql.go` | Exact UID-bound transition validation and `MigrationEvidenceMissing` fail-closed paths, terminal migration evidence | **Mixed: durable migration lifecycle + exceptional recovery compatibility** | #4387 classify individual branches, preserve replay prevention and retained status. Do not remove the one-shot schema migration contract |
 | `openbao-fabric/overlays/prod/kustomization.yaml` | Renders neutral `storage/retained-pvc.yaml` and `storage/retained-statefulset-volume.yaml`; old `migration/synelia-*` filenames no longer active | **Already retired source naming** | #4406 must update stale description; do not redo PR #4417 |
 | `openbao-fabric/overlays/prod/storage/retained-pvc.yaml` | Physical PVC `data-openbao-fabric-0-synelia`, class `storage-rwo-retain`, `Prune=false,Delete=false`; migration-source provenance labels already retired in #4429 | **Stateful physical identity + migration audit metadata** | Keep PVC name, class, retention and pruning safeguards. Do not remove protective annotations or rename the physical claim. The native base StatefulSet uses an independently verified volumeClaimTemplate (#4436); switching the existing production overlay to the base would change the claim name and may mount empty storage (#4406) |
@@ -19,21 +19,65 @@
 | Area | Verified source result | Still not proven |
 |---|---|---|
 | CSI migration inputs | #4434 removed ignored runtime/workspace migration Go bindings and CRD spec schemas; #4433 guards new tenant YAML declarations | Kubernetes stored-object compatibility under future CR updates beyond schema pruning |
-| Hermes bootstrap | #4431 removed destructive historical profile cleanup and its unused retention environment variable | A runtime upgrade from an adopted named profile to a flat root |
-| Native Hermes mount | #4437 added Retain/Delete, double-reconcile regression for canonical PVC with flat `/opt/data` | An existing CR specifying `adoptLegacyProfile: true` still changes the actual subPath; never silently drop its data mapping |
+| Hermes bootstrap | #4431 removed destructive profile cleanup; merged #4451 retired legacy `profiles/<agentKey>` subPath routing and retained `adoptLegacyProfile` as fail-closed, immutable API sentinel | Any **stored** old CR still carrying `adoptLegacyProfile: true` will fail reconcile; no inference of safe physical data move |
+| Native Hermes mount | #4437 / #4451: normal runtime uses flat `/opt/data` and canonical PVC; the legacy subPath renderer is gone | Source regression is not a guarantee that an old retained PVC contains a flat Hermes home |
 | OpenBao native-vs-retained | #4436 tested a new-cluster native volumeClaimTemplate and explicit retained production claim identity; #4429 removed historical provenance labels | A production overlay transition without empty-data substitution; the physical claim `data-openbao-fabric-0-synelia` is deliberately still active |
 
-**Explicit unresolved compatibility:** `adoptLegacyProfile` is not dead code. `agentidentity_resources.go` reads it to mount `profiles/<agentKey>` as the home on a retained PVC. Removing its API/CEL/controller/test behavior without a reviewed, data-preserving transition could silently redirect an existing agent onto another directory. This is a real blocker to *complete* history retirement, not a reason to restore CSI copy Jobs. Legacy audit `status.runtimeStorageMigration` and `status.workspaceMigration` are stored history, not native reconcile gates; follow ADR-044 for status compatibility.
+**Explicit stored-CR compatibility:** `adoptLegacyProfile` is now an immutable,
+fail-closed sentinel in API/CRD, **not an active subPath feature** (merged
+#4451). It refuses provisioning and Deployment mutation for stored `true`
+rather than redirecting a historical profile to an empty directory. That may
+block a live old CR's reconciliation; only a separately reviewed data
+transition can resolve it. Legacy audit `status.runtimeStorageMigration` and
+`status.workspaceMigration` remain stored history, not native reconcile
+inputs. They must not be pruned merely to make the YAML look clean.
 
 ## Required closure evidence
 
-1. **#4387 (LiteLLM):** read-only hAIrem/Indiba CR status (generation, current attempt, exact Job UID, phase, retained terminal evidence), compare with CRD admission/CEL and code. Preserve stored resource history and replay prevention; only then design a small compatibility-safe source change. A successful historical recovery is *not* established by this inventory.
-2. **#4398 (clean room):** exercise an arbitrary third tenant and clean hAIrem/Indiba profiles with no PVC/Jobs/status in a fake client or envtest, verify canonical RWX provisioning, initial LiteLLM schema Job, no extra migration inputs and idempotent multi-tenant behavior. Existing stateful data identities must not be changed as part of the test.
-3. **#4406 (OpenBao):** demonstrate rendered baseline compatibility and safe native fresh-install rule without misrepresenting a new empty Raft volume as existing data. Physical source/target UID, data restoration and backup checks are still separate and require read-only observations.
-4. **#4386 (final sweep):** search active Kustomizations, generated CRD, agents and scripts for CSI migration-only consumers; separate non-rendered historical files from actual runtime dependencies; produce exact render/test evidence for every subsequent deletion. Preserve fail-closed PVC ownership rules (#4418/#4419), safe withdrawal (#4420) and old physical volume identity.
+1. **#4387 (LiteLLM, independent):** merged #4453 enables atomic retirement
+   of incident requests after verified terminal success; #4454 removed
+   hAIrem/Indiba historical requests from portable GitOps. Neither commit
+   proves physical terminal history or runtime convergence. Their dedicated
+   source guard is wired in CI.
+2. **#4398 (clean room):** source tests exercise canonical RWX PVC allocation
+   and multi-tenant repeated reconciliation; controller tests also exercise
+   LiteLLM attempt-zero creation. A full physical fresh installation and
+   data content tests remain distinct evidence, not a prerequisite for the
+   generic declarative contract.
+3. **#4406 (OpenBao):** native `base/statefulset.yaml` has a retained
+   `volumeClaimTemplates` for fresh installs. The **production overlay**
+   intentionally selects the *different* retained physical claim
+   `data-openbao-fabric-0-synelia`, with `Prune=false,Delete=false` and
+   no new volume template. Its physical cutover/restore proof remains
+   separate; changing prod to the base would select another PVC.
+4. **#4386 (final source sweep):** the existing
+   `scripts/validation/tests/test_fabric_native_storage_declarations.py`
+   refuses old workspace `claimSuffix`/`migration` and AgentIdentity
+   `runtime.storage.migration`/`adoptLegacyProfile:true` across active
+   GitOps tenants; PR `test/4386-enforce-native-storage-declarations-ci`
+   adds it to the always-running Kustomize validation. This prevents
+   accidental reintroduction of CSI incident inputs in future tenant
+   declarations without relying on a cluster.
+5. **#4357 (physical acceptance):** independently verify retained PVC/PV
+   identities, user data, OpenBao health, Argo image and running revision.
+   Source/CI success is deliberately not represented as this evidence.
+
+## Surface classification / disposal constraints
+
+| Source surface | Class | Explicit policy |
+|---|---|---|
+| Agent RWO `ensurePVC`, tenant workspace RWX `SharedWorkspaceReconciler`, provider-neutral StorageClasses | Permanent product contract | Keep native dynamic PVC provisioning and fail-closed ownership, multi-tenant and retention checks |
+| Tenant `spec.workspace.migration`, `claimSuffix`, Agent `runtime.storage.migration` | Retired migration-only inputs | Absent from active Go spec and active tenant YAML after #4434; reject their return in GitOps |
+| Agent `adoptLegacyProfile` API/CEL | Stored-object compatibility sentinel | Keep readable and immutable; `true` is rejected by runtime, not silently remounted |
+| `status.runtimeStorageMigration`, `status.workspaceMigration` | Historical audit status | Preserve existing object/API schema until independently verified safe retirement; not a normal reconciliation gate |
+| OpenBao production PVC `data-openbao-fabric-0-synelia`, patch, Retain and anti-prune options | Immutable physical production binding | Keep unchanged until separately authorized, data-preserving transition #4406 |
+| Historical CSI Jobs, snapshots, zvols, PVs and bridge records | One-shot operational artifacts / audit and rollback records | Do not infer obsolete physical resources can be deleted from Git source alone; require separate authorized cleanup |
 
 **Non-goals:** No migration API revival, no provider-specific Fabric special case, no hAIrem-specific generic controller behavior, no physical PV/PVC deletion, no direct Argo synchronization, no production promotion. This document is a bounded first inventory, not a declaration that #4386 or Wave 2 is complete.
 
-## Retired Hermes subPath reconciliation (source candidate #4386)
+## Retired Hermes subPath reconciliation (merged #4451)
 
-The source branch `refactor/4386-retire-legacy-hermes-runtime-routing` removes the physical `profiles/<agentKey>` subPath selection and migration-specific bootstrap validation from the runtime renderer. The `adoptLegacyProfile` API/CRD field is deliberately **retained as a fail-closed compatibility sentinel**: `true` rejects PVC provisioning and Deployment reconciliation rather than mounting a potentially different data directory. Source-only tests confirm flat native mounts and rejection of old flagged CRs. The deployment/availability impact of any **stored** flagged CR requires an explicit gate before promotion; source changes alone cannot prove zero historical users. This does not change OpenBao's retained production PVC (#4406), nor erase UID-bound audit statuses.
+The legacy subPath, bootstrap full-PVC mount, and special routing were
+removed in merged #4451. The API sentinel remains deliberately fail-closed.
+The physical state of old CRs is a separate deployment-compatibility gate;
+source-only tests do not authorize deleting, copying or remounting data.
