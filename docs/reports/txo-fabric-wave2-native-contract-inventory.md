@@ -33,3 +33,7 @@
 4. **#4386 (final sweep):** search active Kustomizations, generated CRD, agents and scripts for CSI migration-only consumers; separate non-rendered historical files from actual runtime dependencies; produce exact render/test evidence for every subsequent deletion. Preserve fail-closed PVC ownership rules (#4418/#4419), safe withdrawal (#4420) and old physical volume identity.
 
 **Non-goals:** No migration API revival, no provider-specific Fabric special case, no hAIrem-specific generic controller behavior, no physical PV/PVC deletion, no direct Argo synchronization, no production promotion. This document is a bounded first inventory, not a declaration that #4386 or Wave 2 is complete.
+
+## Retired Hermes subPath reconciliation (source candidate #4386)
+
+The source branch `refactor/4386-retire-legacy-hermes-runtime-routing` removes the physical `profiles/<agentKey>` subPath selection and migration-specific bootstrap validation from the runtime renderer. The `adoptLegacyProfile` API/CRD field is deliberately **retained as a fail-closed compatibility sentinel**: `true` rejects PVC provisioning and Deployment reconciliation rather than mounting a potentially different data directory. Source-only tests confirm flat native mounts and rejection of old flagged CRs. The deployment/availability impact of any **stored** flagged CR requires an explicit gate before promotion; source changes alone cannot prove zero historical users. This does not change OpenBao's retained production PVC (#4406), nor erase UID-bound audit statuses.

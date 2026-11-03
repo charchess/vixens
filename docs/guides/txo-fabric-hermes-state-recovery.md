@@ -94,14 +94,24 @@ Runtime-owned config backups are useful defense in depth but cannot replace
 a private-state checkpoint; #3743 tracks that ownership. #3742 covers runtime
 probe robustness.
 
-## Special case: legacy-profile adoption
+## Retired legacy-profile adoption (stored CR compatibility)
 
-`runtime.storage.adoptLegacyProfile` changes the runtime's effective home
-to an existing `profiles/<agentKey>` directory via `subPath`. Even though
-the operator does not copy/flatten that state, startup can change config or
-Hindsight metadata. **If that old profile holds valuable data**, checkpoint
-it *before* promoting adoption. The first acceptance needs old state,
-upgrade, separately restored PVC and verified rollback per #3688.
+New Hermes runtimes use the canonical PVC mounted flat at `/opt/data`.
+The former `runtime.storage.adoptLegacyProfile` data-root switch is **not a
+runtime feature**: a stored CR with `true` now fails closed before creating or
+reconciling a PVC/Deployment. Its schema field remains temporarily readable
+and immutable so that an existing stored flag cannot be silently pruned into
+a different mount.
+
+**Availability gate before promotion:** source CI cannot demonstrate that
+no running AgentIdentity uses the old flag. If a stored CR still has
+`adoptLegacyProfile: true`, promotion will block its next reconcile and may
+prevent recovery after restart. A separately approved data-preserving
+transition or explicit compatibility decision is required before promoting
+this operator change to a cluster containing those CRs. Never unset the flag
+as a shortcut: a flat mount and a historical `profiles/<agentKey>` directory
+do not necessarily contain equivalent data.
+
 
 A retained PV's `Retain` reclaim policy means the backend should survive
 PVC deletion; it is **not itself a backup** and does not guarantee that the
