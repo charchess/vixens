@@ -292,7 +292,7 @@ spec:
                 properties:
                   migrationRecovery:
                     description: |-
-                      MigrationRecovery is a reviewed, immutable recovery identifier for a
+                      MigrationRecovery is a reviewed, immutable-until-retired recovery identifier for a
                       legacy failed migration whose retained Job evidence was lost before the
                       UID-bound status contract existed. It permits exactly attempt 1, never
                       resets an existing attempt history, and is not a recurring operation.
@@ -309,7 +309,7 @@ spec:
                     type: integer
                   migrationRecoveryTransitions:
                     description: |-
-                      MigrationRecoveryTransitions are reviewed, immutable recovery admissions
+                      MigrationRecoveryTransitions are reviewed, immutable-until-retired recovery admissions
                       for a specific retained EvidenceMissing migration record. Entries are
                       append-only: each request names the tenant, exact prior attempt and UID,
                       and one unique identifier; it cannot repair or replace historical status.
@@ -374,21 +374,30 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-validations:
-                - message: migrationRecovery cannot be changed or removed once declared
+                - message: migrationRecovery is immutable except for full retirement
+                    with migrationRetry zero
                   rule: '!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery)
-                    && self.migrationRecovery == oldSelf.migrationRecovery)'
-                - message: migrationRecoveryFailedGeneration cannot be changed or
-                    removed once declared
+                    && self.migrationRecovery == oldSelf.migrationRecovery) || (!has(self.migrationRecovery)
+                    && !has(self.migrationRecoveryFailedGeneration) && !has(self.migrationRecoveryTransitions)
+                    && (!has(self.migrationRetry) || self.migrationRetry == 0))'
+                - message: migrationRecoveryFailedGeneration is immutable except for
+                    full retirement
                   rule: '!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration)
-                    && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)'
+                    && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)
+                    || (!has(self.migrationRecovery) && !has(self.migrationRecoveryFailedGeneration)
+                    && !has(self.migrationRecoveryTransitions) && (!has(self.migrationRetry)
+                    || self.migrationRetry == 0))'
                 - message: migrationRecovery and migrationRecoveryFailedGeneration
                     must be declared together
                   rule: has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)
-                - message: migrationRecoveryTransitions is append-only
+                - message: migrationRecoveryTransitions is append-only except for
+                    full retirement
                   rule: '!has(oldSelf.migrationRecoveryTransitions) || (has(self.migrationRecoveryTransitions)
                     && self.migrationRecoveryTransitions.size() >= oldSelf.migrationRecoveryTransitions.size()
                     && oldSelf.migrationRecoveryTransitions.all(old, self.migrationRecoveryTransitions.exists(current,
-                    current == old)))'
+                    current == old))) || (!has(self.migrationRecovery) && !has(self.migrationRecoveryFailedGeneration)
+                    && !has(self.migrationRecoveryTransitions) && (!has(self.migrationRetry)
+                    || self.migrationRetry == 0))'
               displayName:
                 description: DisplayName is the human-readable tenant name.
                 maxLength: 253
