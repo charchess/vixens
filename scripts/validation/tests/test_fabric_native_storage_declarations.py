@@ -31,6 +31,21 @@ def assert_native_storage_declaration(document: dict) -> None:
         forbidden = {"claimSuffix", "migration"} & workspace.keys()
         if forbidden:
             raise AssertionError(f"TenantBundle workspace has historical CSI fields: {sorted(forbidden)}")
+        # New GitOps tenant declarations must not quietly fall back to the
+        # Hermes release profile's storage class. Existing stored CRs are
+        # unaffected; the operator's compatibility fallback is not changed.
+        policy = spec.get("agentStorage")
+        expected = {
+            "retainedStorageClassName": "storage-rwo-retain",
+            "disposableStorageClassName": "storage-rwo-delete",
+        }
+        if not isinstance(policy, dict) or any(
+            policy.get(key) != value for key, value in expected.items()
+        ):
+            raise AssertionError(
+                "TenantBundle must declare provider-neutral RWO Retain/Delete classes "
+                "in spec.agentStorage; profile-class fallback is compatibility-only"
+            )
     elif kind == "AgentIdentity":
         storage = ((spec.get("runtime") or {}).get("storage") or {})
         forbidden = {"migration"} & storage.keys()
@@ -87,10 +102,51 @@ class NativeFabricStorageSourceTests(unittest.TestCase):
                     assert_native_storage_declaration(document)
         self.assertEqual(seen, {"TenantBundle", "AgentIdentity"})
 
+    def test_rejects_missing_or_non_native_tenant_storage_policy(self):
+        valid = {
+            "kind": "TenantBundle",
+            "metadata": {"name": "arbitrary-third-tenant"},
+            "spec": {
+                "workspace": {"profileRef": "workspace-shared"},
+                "agentStorage": {
+                    "retainedStorageClassName": "storage-rwo-retain",
+                    "disposableStorageClassName": "storage-rwo-delete",
+                },
+            },
+        }
+        assert_native_storage_declaration(valid)
+        invalid_policies = (
+            None,
+            {},
+            {"retainedStorageClassName": "storage-rwo-retain"},
+            {"disposableStorageClassName": "storage-rwo-delete"},
+            {"retainedStorageClassName": "storage-rwo-retain",
+             "disposableStorageClassName": "storage-rwo-retain"},
+            {"retainedStorageClassName": "synelia-iscsi-stateful-retain",
+             "disposableStorageClassName": "storage-rwo-delete"},
+            {"retainedStorageClassName": "storage-rwo-retain",
+             "disposableStorageClassName": "synelia-iscsi-delete"},
+        )
+        for policy in invalid_policies:
+            with self.subTest(policy=policy), self.assertRaises(AssertionError):
+                document = {
+                    "kind": "TenantBundle",
+                    "metadata": {"name": "arbitrary-third-tenant"},
+                    "spec": {"agentStorage": policy},
+                }
+                assert_native_storage_declaration(document)
+
     def test_rejects_old_workspace_cutover_and_claim_alias(self):
+        native_policy = {
+            "retainedStorageClassName": "storage-rwo-retain",
+            "disposableStorageClassName": "storage-rwo-delete",
+        }
         for field, value in (("claimSuffix", "synelia"), ("migration", {"cutover": True})):
             with self.subTest(field=field), self.assertRaises(AssertionError):
-                assert_native_storage_declaration({"kind": "TenantBundle", "spec": {"workspace": {field: value}}})
+                assert_native_storage_declaration({
+                    "kind": "TenantBundle",
+                    "spec": {"workspace": {field: value}, "agentStorage": native_policy},
+                })
 
     def test_rejects_old_agent_cutover_and_profile_adoption(self):
         for storage in ({"migration": {"cutover": True}}, {"adoptLegacyProfile": True}, {"adoptLegacyProfile": False}):
@@ -100,6 +156,10 @@ class NativeFabricStorageSourceTests(unittest.TestCase):
     def test_native_storage_and_independent_sql_migrations_are_allowed(self):
         assert_native_storage_declaration({"kind": "TenantBundle", "spec": {
             "workspace": {"profileRef": "shared-nfs"},
+            "agentStorage": {
+                "retainedStorageClassName": "storage-rwo-retain",
+                "disposableStorageClassName": "storage-rwo-delete",
+            },
             "aiGateway": {"migrationRetry": 1},
         }})
         assert_native_storage_declaration({"kind": "AgentIdentity", "spec": {
