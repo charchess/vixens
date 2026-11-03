@@ -26,7 +26,7 @@ func testStorageIdentity(tenant string, key string, policy string) *fabricv1alph
 
 func TestRetainedPVCNeverGetsGCOwnerOnCreationOrReconcile(t *testing.T) {
 	ctx := context.Background()
-	tenant := testTenant()
+	tenant := configuredAgentStorageTenant()
 	agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
 	profile := testRuntimeProfile()
 	ns := tenantNamespace(tenant.Name)
@@ -123,7 +123,7 @@ func TestLegacyProfileAdoptionCannotProvisionAnEmptyPVC(t *testing.T) {
 		t.Run(policy, func(t *testing.T) {
 			ctx := context.Background()
 			scheme := testScheme(t)
-			tenant := testTenant()
+			tenant := configuredAgentStorageTenant()
 			profile := testRuntimeProfile()
 			agent := testStorageIdentity(tenant.Name, "spark", policy)
 			agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
@@ -146,7 +146,7 @@ func TestLegacyProfileAdoptionCannotProvisionAnEmptyPVC(t *testing.T) {
 func TestNativeProfileStillProvisionsCanonicalPVCWithoutHistoricalInput(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
-	tenant := testTenant()
+	tenant := configuredAgentStorageTenant()
 	profile := testRuntimeProfile()
 	agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
 	ns := tenantNamespace(tenant.Name)
