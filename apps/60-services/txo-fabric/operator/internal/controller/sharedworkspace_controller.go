@@ -83,14 +83,10 @@ func (r *SharedWorkspaceReconciler) reconcileWorkspaceRelease(ctx context.Contex
 	pending := false
 	for i := range pvcs.Items {
 		pvc := &pvcs.Items[i]
-		if pvc.Labels[LabelWorkspaceScope] == "" {
-			continue
-		}
-		retention := pvc.Labels[LabelWorkspaceRetention]
-		if retention == "" && bundle.Spec.Workspace != nil {
-			retention = workspaceRetentionPolicy(bundle.Spec.Workspace)
-		}
-		if retention != fabricv1alpha1.WorkspaceRetentionDelete {
+		// Never delete a PVC merely because its tenant-name and retention labels
+		// match. Release must prove the same tenant ID and canonical scope
+		// identity required by native provisioning; ambiguous claims are kept.
+		if !workspacePVCIsOwnedForRelease(pvc, bundle) {
 			continue
 		}
 		pending = true
@@ -104,6 +100,38 @@ func (r *SharedWorkspaceReconciler) reconcileWorkspaceRelease(ctx context.Contex
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 	return ctrl.Result{}, nil
+}
+
+// workspacePVCIsOwnedForRelease restricts destructive cleanup to an
+// explicitly disposable, fully identified native workspace claim. The
+// TenantBundle may already have dropped spec.workspace at deletion time.
+func workspacePVCIsOwnedForRelease(pvc *corev1.PersistentVolumeClaim, bundle *fabricv1alpha1.TenantBundle) bool {
+	labels := pvc.Labels
+	if labels[LabelPartOf] != "txo-fabric" ||
+		labels[LabelTenantName] != bundle.Name ||
+		bundle.Spec.TenantID == "" || labels[LabelTenantID] != bundle.Spec.TenantID ||
+		labels[LabelWorkspaceRetention] != fabricv1alpha1.WorkspaceRetentionDelete {
+		return false
+	}
+	domain := labels[LabelWorkspaceDomain]
+	scope := labels[LabelWorkspaceScope]
+	key := labels[LabelWorkspaceKey]
+	mode := labels[LabelWorkspaceMode]
+	if (domain != "shared" && domain != "skills") ||
+		(mode != "reference" && mode != "collaborative") {
+		return false
+	}
+	if scope == "organization" {
+		if key != "organization" {
+			return false
+		}
+	} else if (scope != "group" && scope != "user") || key == "" {
+		return false
+	}
+	return pvc.Namespace == tenantNamespace(bundle.Name) &&
+		pvc.Name == workspacePVCName(workspaceScope{
+			Domain: domain, Scope: scope, Key: key, Mode: mode,
+		})
 }
 
 func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
