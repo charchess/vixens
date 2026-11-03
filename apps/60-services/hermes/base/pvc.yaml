@@ -10,6 +10,7 @@ spec:
   storageClassName: synelia-iscsi-stateful-retain
   resources:
     requests:
-      # Persona profiles, durable memories, and staged migrations share this RWO volume.
-      # Keep headroom for copy-first migrations; legacy session databases stay outside it.
+      # Existing stateful Hermes private data: 13 profile directories were
+      # observed after recovery, not exhaustively byte-verified. Keep the
+      # retained 80Gi RWO claim identity until a separate data-safe transition.
       storage: 80Gi
