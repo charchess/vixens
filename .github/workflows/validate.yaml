@@ -372,18 +372,31 @@ jobs:
 
           echo "✅ All kustomize builds and K8s validations passed"
 
-      - name: Regression — official Synelia CSI safety gates
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_synelia_csi_source.py' -v
-      - name: Regression — native Fabric storage declarations (offline)
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_native_storage_declarations.py' -v
-      - name: Regression — portable Fabric tenant LiteLLM declarations (offline)
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_native_ai_gateway_declarations.py' -v
-      - name: Regression — Fabric RWX production acceptance (offline)
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_rwx_acceptance.py' -v
-      - name: Regression — mail native storage and runtime credential contract
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_mail_native_storage_contract.py' -v
-      - name: Regression — Hermes UMI retained stateful safety contract
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_hermes_umi_stateful_contract.py' -v
+
+  # Source-only Python regressions must run even when no Kustomize files change.
+  offline-source-regressions:
+    name: Offline Source Contract Regressions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Install offline manifest parser
+        run: python3 -m pip install --disable-pip-version-check pyyaml==6.0.2
+      - name: Enforce offline source contracts and their CI routing
+        run: |
+          set -euo pipefail
+          for suite in \
+            test_synelia_csi_source.py \
+            test_fabric_native_storage_declarations.py \
+            test_fabric_native_ai_gateway_declarations.py \
+            test_fabric_rwx_acceptance.py \
+            test_mail_native_storage_contract.py \
+            test_hermes_umi_stateful_contract.py \
+            test_ci_offline_source_routing.py; do
+            python3 -m unittest discover -s scripts/validation/tests -p "$suite" -v
+          done
 
   # 4️⃣ Secret Scanning (gitleaks)
   secret-scan:
@@ -597,6 +610,7 @@ jobs:
       - yaml-lint
       - argocd-validate
       - kustomize-validate
+      - offline-source-regressions
       - secret-scan
       - security-scan
       - image-scan
@@ -615,6 +629,7 @@ jobs:
           YAML_RESULT: ${{ needs.yaml-lint.result }}
           ARGOCD_RESULT: ${{ needs.argocd-validate.result }}
           KUSTOMIZE_RESULT: ${{ needs.kustomize-validate.result }}
+          OFFLINE_SOURCE_RESULT: ${{ needs.offline-source-regressions.result }}
           SECRET_RESULT: ${{ needs.secret-scan.result }}
           SECURITY_RESULT: ${{ needs.security-scan.result }}
           IMAGE_RESULT: ${{ needs.image-scan.result }}
@@ -672,6 +687,7 @@ jobs:
           require_success "Security best practices" "$SECURITY_RESULT"
           require_success "Container image security" "$IMAGE_RESULT"
           require_success "Retired pattern guard" "$RETIRED_RESULT"
+          require_success "Offline source contracts" "$OFFLINE_SOURCE_RESULT"
 
           if [ "$EVENT_NAME" = "pull_request" ]; then
             require_conditional "Branch flow" "$BRANCH_RESULT" "true"
