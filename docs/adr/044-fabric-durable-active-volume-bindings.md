@@ -15,6 +15,31 @@ The maintainer explicitly clarified that **AgentIdentity runtimes are
 disposable**. This does **not** mean tenant-wide shared business workspaces
 or physical PVC/PV resources may be deleted without separate authorization.
 
+## Stored-object compatibility after CSI retirement
+
+The retained `status.runtimeStorageMigration` and
+`status.workspaceMigration` types are an **archive-only wire compatibility
+surface**, not a current storage lifecycle capability. They remain decodable
+in stored CRs/CRDs so that a normal API update does not accidentally erase
+historical evidence. Nothing in an ordinary agent or tenant controller is
+permitted to read these records to choose, mount, adopt, rebind, or verify
+a PVC. The native routing authority is the tenant's current declared policy
+and the observed PVC/PV ownership and binding, not the provenance of a
+past migration.
+
+`adoptLegacyProfile: true` is a separate immutable API sentinel which is
+rejected fail-closed; it is not a valid native storage mode. A recovery of
+an old physical profile requires a separately reviewed, data-preserving
+operational procedure. A future removal of these archived status fields
+requires its own Kubernetes stored-object compatibility plan and cannot be
+inferred from the absence of source reconciliation consumers.
+
+The CI source guard
+`test_fabric_native_storage_declarations.py` checks both that active
+tenants do not request retired CSI fields and that executable Fabric Go
+controllers cannot regain archived-status dependencies. The test does not
+claim any physical data-copy verification.
+
 ## Decision
 
 1. **Private agent RWO:** use the original, canonical
