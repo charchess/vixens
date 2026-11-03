@@ -379,8 +379,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_fabric_rwx_acceptance.py' -v
       - name: Regression — mail native storage and runtime credential contract
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_mail_native_storage_contract.py' -v
-      - name: Regression — Hermes active Synelia recovery contract
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_hermes_4185_*.py' -v
+      - name: Regression — Hermes UMI retained stateful safety contract
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_hermes_umi_stateful_contract.py' -v
 
   # 4️⃣ Secret Scanning (gitleaks)
   secret-scan:
