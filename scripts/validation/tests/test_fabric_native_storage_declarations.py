@@ -42,7 +42,7 @@ def assert_no_archived_csi_status_in_controller(code: str) -> None:
     import re
 
     for identifier in ARCHIVED_CSI_STATUS_REFERENCES:
-        if re.search(r"\\b" + identifier + r"\\b", code):
+        if re.search(r"\b" + identifier + r"\b", code):
             raise AssertionError(
                 "controller must not consult archived CSI evidence: " + identifier
             )
