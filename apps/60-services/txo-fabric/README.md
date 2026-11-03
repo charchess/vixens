@@ -339,8 +339,8 @@ Stored CRs carrying the retired `runtime.storage.adoptLegacyProfile: true`
 flag are rejected **fail-closed** by the controller. Their status and physical
 PVC data must not be silently rewritten, pruned, remounted or assumed migrated.
 For this exceptional case, use
-[the retained-Hermes state recovery procedure](../../../../docs/guides/txo-fabric-hermes-state-recovery.md)
-and [ADR-044](../../../../docs/adr/044-fabric-durable-active-volume-bindings.md).
+[the retained-Hermes state recovery procedure](../../../docs/guides/txo-fabric-hermes-state-recovery.md)
+and [ADR-044](../../../docs/adr/044-fabric-durable-active-volume-bindings.md).
 Historical CSI copy and adoption evidence belongs in incident/issue records,
 not the ordinary creation or reconciliation contract.
 
