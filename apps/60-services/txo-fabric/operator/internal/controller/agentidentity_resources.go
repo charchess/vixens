@@ -73,6 +73,9 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	if agent.Spec.Runtime.Storage.AdoptLegacyProfile && storageRetentionPolicy(agent) != StorageRetentionRetain {
 		return fmt.Errorf("legacy Hermes profile adoption requires retained runtime storage")
 	}
+	if agent.Spec.Runtime.Storage.AdoptLegacyProfile && (pvc.UID == "" || pvc.Spec.VolumeName == "" || pvc.Status.Phase != corev1.ClaimBound) {
+		return fmt.Errorf("legacy Hermes profile adoption requires an identity-proven Bound retained PVC %s/%s", namespace, name)
+	}
 	// Canonical name alone is not proof that a pre-existing RWO PVC belongs
 	// to this agent. In particular, never retroactively label an unrelated
 	// or unlabelled volume as Fabric-managed.

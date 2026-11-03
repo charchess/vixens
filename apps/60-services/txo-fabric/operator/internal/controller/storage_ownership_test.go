@@ -167,3 +167,40 @@ func TestNativeProfileStillProvisionsCanonicalPVCWithoutHistoricalInput(t *testi
 		t.Fatalf("retained PVC unexpectedly acquired a GC owner: %#v", owner)
 	}
 }
+
+
+func TestLegacyProfileCannotAdoptPendingClaim(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+	ns := tenantNamespace(tenant.Name)
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns,
+			UID: types.UID("pending-claim"), Labels: agentLabels(agent, tenant),
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+		},
+		Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimPending},
+	}
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err == nil {
+		t.Fatal("pending claim must not be treated as historical data")
+	}
+	var after corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: ns}, &after); err != nil {
+		t.Fatal(err)
+	}
+	if after.UID != pvc.UID || after.Spec.VolumeName != "" ||
+		after.Status.Phase != corev1.ClaimPending {
+		t.Fatalf("rejected historical claim was mutated: %#v", after)
+	}
+}
+
