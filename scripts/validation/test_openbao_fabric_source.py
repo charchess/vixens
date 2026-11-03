@@ -303,9 +303,11 @@ class SourceChangeScopeTests(unittest.TestCase):
     def check_paths(paths):
         with tempfile.TemporaryDirectory() as directory:
             render = Path(directory) / "prod.yaml"
-            render.write_text("kind: StatefulSet\\nmetadata:\\n  name: openbao-fabric\\n", encoding="utf-8")
-            with mock.patch.object(guard, "changed_paths", return_value=list(paths)), \\
-                    mock.patch.object(guard, "git", return_value=""):
+            render.write_text("kind: StatefulSet\nmetadata:\n  name: openbao-fabric\n", encoding="utf-8")
+            with (
+                mock.patch.object(guard, "changed_paths", return_value=list(paths)),
+                mock.patch.object(guard, "git", return_value=""),
+            ):
                 return guard.validate("origin/main", "HEAD", render)
 
     def test_independent_storage_change_has_no_legacy_exception_requirement(self):
