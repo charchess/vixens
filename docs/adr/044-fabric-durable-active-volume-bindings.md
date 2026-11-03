@@ -40,6 +40,26 @@ tenants do not request retired CSI fields and that executable Fabric Go
 controllers cannot regain archived-status dependencies. The test does not
 claim any physical data-copy verification.
 
+## New tenant declaration contract
+
+Every **new GitOps TenantBundle** declares `spec.agentStorage` with the platform's
+provider-neutral `storage-rwo-retain` and `storage-rwo-delete` capability
+classes. This policy is independent of the selected Hermes runtime image,
+release channel, or AgentRuntimeProfile. The native storage source guard in
+CI checks all current and future tenant declarations and rejects omission,
+incomplete or identical classes, and provider-specific CSI driver names in
+those two fields. This is **declarative admission by CI**, not a new operator
+default and not a physical volume migration.
+
+For older Kubernetes TenantBundles that were stored before
+`spec.agentStorage` was introduced, the operator still decodes and
+reconciles the historical profile-based class fallback; deleting that
+compatibility branch would require a separate stored-CR inventory and
+physical-volume gate. An unrelated arbitrary third tenant has no reason
+to acquire that fallback when declared new in GitOps. The current CI guard
+deliberately requires the existing published pair of RWO capability names;
+changing the catalog requires a separately reviewed contract update.
+
 ## Decision
 
 1. **Private agent RWO:** use the original, canonical

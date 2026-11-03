@@ -13,6 +13,10 @@ spec:
     mode: Parked
   isolation:
     profile: Shared
+  # Native private agent storage policy, even while this tenant is Parked.
+  agentStorage:
+    retainedStorageClassName: storage-rwo-retain
+    disposableStorageClassName: storage-rwo-delete
   persistence:
     postgresql:
       mode: Shared
