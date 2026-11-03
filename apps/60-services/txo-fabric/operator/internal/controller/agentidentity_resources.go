@@ -39,6 +39,9 @@ func desiredAgentPVCStorageClass(agent *fabricv1alpha1.AgentIdentity, tenant *fa
 }
 
 func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
+	if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
+		return fmt.Errorf("runtime.storage.adoptLegacyProfile is retired; refusing to provision or rebind an existing profile without a separately approved data transition")
+	}
 	name := runtimePVCName(agent.Spec.AgentKey)
 	storageClass, err := desiredAgentPVCStorageClass(agent, tenant, profile)
 	if err != nil {
@@ -47,9 +50,6 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	var pvc corev1.PersistentVolumeClaim
 	err = r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
-		if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
-			return fmt.Errorf("legacy Hermes profile adoption requires a pre-existing retained PVC %s/%s; refusing to create an empty replacement", namespace, name)
-		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		pvc = corev1.PersistentVolumeClaim{
@@ -69,12 +69,6 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	}
 	if err != nil {
 		return err
-	}
-	if agent.Spec.Runtime.Storage.AdoptLegacyProfile && storageRetentionPolicy(agent) != StorageRetentionRetain {
-		return fmt.Errorf("legacy Hermes profile adoption requires retained runtime storage")
-	}
-	if agent.Spec.Runtime.Storage.AdoptLegacyProfile && (pvc.UID == "" || pvc.Spec.VolumeName == "" || pvc.Status.Phase != corev1.ClaimBound) {
-		return fmt.Errorf("legacy Hermes profile adoption requires an identity-proven Bound retained PVC %s/%s", namespace, name)
 	}
 	// Canonical name alone is not proof that a pre-existing RWO PVC belongs
 	// to this agent. In particular, never retroactively label an unrelated
@@ -215,6 +209,9 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 }
 
 func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+	if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
+		return fmt.Errorf("runtime.storage.adoptLegacyProfile is retired; refusing to remount an existing named profile on a different home")
+	}
 	var role effectiveFunctionalProfile
 	if len(functional) > 0 {
 		role = functional[0]
@@ -236,15 +233,6 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Contex
 	runtimeDataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	bootstrapDataMount := runtimeDataMount
 	bootstrapHome := "/opt/data"
-	if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
-		if storageRetentionPolicy(agent) != StorageRetentionRetain {
-			return fmt.Errorf("legacy Hermes profile adoption requires retained runtime storage")
-		}
-		legacySubPath := fmt.Sprintf("profiles/%s", agent.Spec.AgentKey)
-		runtimeDataMount.SubPath = legacySubPath
-		bootstrapDataMount = corev1.VolumeMount{Name: "data", MountPath: "/mnt/txo-data"}
-		bootstrapHome = fmt.Sprintf("/mnt/txo-data/%s", legacySubPath)
-	}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{runtimeDataMount, managedPolicyMount}, workspaceMounts...)
 	volumes := []corev1.Volume{
@@ -306,18 +294,12 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Contex
 					Name:            "bootstrap-profile",
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
-					Command: []string{"/bin/sh", "-lc", `legacy_profile="/opt/data/profiles/${AGENT_NAME}"
-if [ "${HERMES_HOME}" != "/opt/data" ]; then
-  if [ ! -d "${HERMES_HOME}" ]; then
-    echo "requested legacy Hermes profile ${AGENT_NAME} is absent from retained runtime storage" >&2
-    exit 78
-  fi
-elif [ -d "${legacy_profile}" ]; then
-  echo "refusing to replace existing Hermes profile ${legacy_profile}; explicit migration is required" >&2
+					Command: []string{"/bin/sh", "-lc", `if [ -d "/opt/data/profiles/${AGENT_NAME}" ]; then
+  echo "refusing to replace an existing Hermes named profile; explicit data transition is required" >&2
   exit 78
 fi
 
-# The init container runs as root for retained-PVC migration checks, but the
+# The init container runs as root to configure the canonical runtime home, but the
 # Hermes gateway itself runs as the image's hermes user. Keep only the
 # Hermes-owned mutable config/backup surface writable by that runtime user.
 install -d -o hermes -g hermes -m 0750 "${HERMES_HOME}/backups" "${HERMES_HOME}/backups/config"
