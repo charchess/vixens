@@ -114,6 +114,134 @@ func TestExistingBrownfieldRetainPVCStaysBoundAndPromotesPV(t *testing.T) {
 	if bound.Spec.PersistentVolumeReclaimPolicy!=corev1.PersistentVolumeReclaimRetain {t.Fatalf("legacy PV wasn't protected: %s",bound.Spec.PersistentVolumeReclaimPolicy)}
 }
 
+// An immutable pre-existing Retain PVC is compatible with an older profile
+// class only when the *actual* PV claimRef is the same tenant/claim/UID and the
+// PV declares that exact class. A matching PVC name alone grants no authority.
+func TestExistingBoundRetainedPVCRejectsForeignOrIncompletePVBinding(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*corev1.PersistentVolumeClaim, *corev1.PersistentVolume)
+		omitPV bool
+	}{
+		{
+			name: "foreign tenant claimRef",
+			mutate: func(_ *corev1.PersistentVolumeClaim, pv *corev1.PersistentVolume) {
+				pv.Spec.ClaimRef.Namespace = "tenant-foreign"
+			},
+		},
+		{
+			name: "foreign claimRef UID",
+			mutate: func(_ *corev1.PersistentVolumeClaim, pv *corev1.PersistentVolume) {
+				pv.Spec.ClaimRef.UID = types.UID("foreign-claim-uid")
+			},
+		},
+		{
+			name: "foreign claim name",
+			mutate: func(_ *corev1.PersistentVolumeClaim, pv *corev1.PersistentVolume) {
+				pv.Spec.ClaimRef.Name = "other-agent-data"
+			},
+		},
+		{
+			name: "PV class disagrees with immutable PVC class",
+			mutate: func(_ *corev1.PersistentVolumeClaim, pv *corev1.PersistentVolume) {
+				pv.Spec.StorageClassName = "unapproved-class"
+			},
+		},
+		{
+			name: "missing claimRef",
+			mutate: func(_ *corev1.PersistentVolumeClaim, pv *corev1.PersistentVolume) {
+				pv.Spec.ClaimRef = nil
+			},
+		},
+		{
+			name:   "missing PV object",
+			omitPV: true,
+		},
+		{
+			name: "PVC not actually bound",
+			mutate: func(pvc *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+				pvc.Status.Phase = corev1.ClaimPending
+			},
+		},
+		{
+			name: "PVC has no UID",
+			mutate: func(pvc *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+				pvc.UID = ""
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			tenant := configuredAgentStorageTenant()
+			agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
+			profile := testRuntimeProfile()
+			profile.Spec.Storage.StorageClassName = "storage-rwo-delete"
+			ns := tenantNamespace(tenant.Name)
+			name := runtimePVCName(agent.Spec.AgentKey)
+			uid := types.UID("existing-claim-uid")
+
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name, Namespace: ns, UID: uid,
+				},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					StorageClassName: stringPtr("storage-rwo-delete"),
+					VolumeName: "existing-pv",
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+				},
+				Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound},
+			}
+			pvc.Labels = agentLabels(agent, tenant)
+			pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+			pv := &corev1.PersistentVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "existing-pv"},
+				Spec: corev1.PersistentVolumeSpec{
+					StorageClassName: "storage-rwo-delete",
+					ClaimRef: &corev1.ObjectReference{
+						Name: name, Namespace: ns, UID: uid,
+					},
+					PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimDelete,
+				},
+			}
+			if tc.mutate != nil {
+				tc.mutate(pvc, pv)
+			}
+			scheme := testScheme(t)
+			builder := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc)
+			if !tc.omitPV {
+				builder = builder.WithObjects(pv)
+			}
+			c := builder.Build()
+			r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
+
+			if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err == nil {
+				t.Fatal("foreign/incomplete bound PVC was accepted")
+			}
+			var current corev1.PersistentVolumeClaim
+			key := types.NamespacedName{Name: name, Namespace: ns}
+			if err := c.Get(ctx, key, &current); err != nil {
+				t.Fatal(err)
+			}
+			if current.UID != pvc.UID ||
+				current.Spec.VolumeName != pvc.Spec.VolumeName ||
+				*current.Spec.StorageClassName != *pvc.Spec.StorageClassName {
+				t.Fatalf("rejected PVC mutated: original=%+v current=%+v", pvc.Spec, current.Spec)
+			}
+			if !tc.omitPV {
+				var currentPV corev1.PersistentVolume
+				if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &currentPV); err != nil {
+					t.Fatal(err)
+				}
+				if currentPV.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimDelete {
+					t.Fatalf("rejected PV reclaim policy mutated: %s", currentPV.Spec.PersistentVolumeReclaimPolicy)
+				}
+			}
+		})
+	}
+}
+
 func TestUnexpectedExistingStorageClassFailsClosedWithoutPVCCreation(t *testing.T){
 	ctx:=context.Background()
 	tenant:=configuredAgentStorageTenant()
