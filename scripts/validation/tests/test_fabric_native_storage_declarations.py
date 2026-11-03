@@ -13,6 +13,13 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
 TENANTS = ROOT / "apps/60-services/txo-fabric/tenants"
+CONTROLLERS = ROOT / "apps/60-services/txo-fabric/operator/internal/controller"
+ARCHIVED_CSI_STATUS_REFERENCES = (
+    "RuntimeStorageMigration",
+    "WorkspaceMigration",
+    "LegacyRecovered",
+    "LegacyTargetBinding",
+)
 
 
 def assert_native_storage_declaration(document: dict) -> None:
@@ -30,7 +37,40 @@ def assert_native_storage_declaration(document: dict) -> None:
             raise AssertionError("AgentIdentity runtime storage requests historical CSI cutover/adoption")
 
 
+def assert_no_archived_csi_status_in_controller(code: str) -> None:
+    """Archived CSI status remains decodable, never a live routing authority."""
+    import re
+
+    for identifier in ARCHIVED_CSI_STATUS_REFERENCES:
+        if re.search(r"\\b" + identifier + r"\\b", code):
+            raise AssertionError(
+                "controller must not consult archived CSI evidence: " + identifier
+            )
+
+
+
+
 class NativeFabricStorageSourceTests(unittest.TestCase):
+    def test_executable_controller_does_not_consume_archived_csi_status(self):
+        files = sorted(CONTROLLERS.glob("*.go"))
+        files = [path for path in files if not path.name.endswith("_test.go")]
+        self.assertTrue(files, "no executable Fabric controller sources found")
+        for path in files:
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                assert_no_archived_csi_status_in_controller(
+                    path.read_text(encoding="utf-8")
+                )
+
+    def test_archived_csi_status_cannot_reenter_runtime_routing(self):
+        for name in ARCHIVED_CSI_STATUS_REFERENCES:
+            with self.subTest(name=name), self.assertRaises(AssertionError):
+                assert_no_archived_csi_status_in_controller(
+                    "func reconcile() { _ = bundle.Status." + name + " }"
+                )
+        assert_no_archived_csi_status_in_controller(
+            'func reconcile() { ensureNativePVC(); ensureTenantWorkspace() }'
+        )
+
     def test_all_declared_tenants_have_no_csi_cutover_inputs(self):
         manifests = sorted(TENANTS.glob("*/**/*.yaml"))
         self.assertTrue(manifests, "Tenant manifests missing")
