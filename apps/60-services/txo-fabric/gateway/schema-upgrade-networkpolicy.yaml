@@ -2,16 +2,16 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: txo-ai-gateway-migration-egress
+  name: txo-ai-gateway-schema-upgrade-egress
   namespace: txo-fabric-system
   labels:
-    app.kubernetes.io/name: txo-ai-gateway-migration
+    app.kubernetes.io/name: txo-ai-gateway-schema-upgrade
     app.kubernetes.io/part-of: txo-fabric
     app.kubernetes.io/component: ai-egress
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: txo-ai-gateway-migration
+      app.kubernetes.io/name: txo-ai-gateway-schema-upgrade
   policyTypes: [Egress]
   egress:
     - to:
@@ -27,6 +27,6 @@ spec:
               kubernetes.io/metadata.name: databases
           podSelector:
             matchLabels:
-              cnpg.io/cluster: postgresql-shared
+              cnpg.io/cluster: postgresql-shared-recovery
       ports:
         - {protocol: TCP, port: 5432}

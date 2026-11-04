@@ -297,33 +297,33 @@ state survive gateway workload replacement.
 The gateway role is the owner of its database but is not superuser and cannot
 create databases or roles.
 
-## Database schema lifecycle
+## Database schema-upgrade lifecycle
 
-LiteLLM database migrations are owned by a dedicated Argo CD Sync hook Job rather
-than by the serving Deployment. `Job/txo-ai-gateway-migrations` runs with the same
+LiteLLM database schema upgrades are owned by a dedicated Argo CD Sync hook Job rather
+than by the serving Deployment. `Job/txo-ai-gateway-schema-upgrade` runs with the same
 pinned LiteLLM image as the gateway and applies that image's bundled Prisma
 migrations before the serving workload is allowed to start.
 
-The ordering is explicit:
+The schema-upgrade ordering is explicit:
 
 ```text
 wave 1  DatabaseRole
 wave 2  Database
-wave 3  txo-ai-gateway-migrations
+wave 3  txo-ai-gateway-schema-upgrade
 wave 4  txo-ai-gateway Deployment
 ```
 
 The serving Deployment sets `DISABLE_SCHEMA_UPDATE=true`; this does not freeze the
 database schema. On every LiteLLM image upgrade the migration Job is recreated and
 runs the migrations bundled with the new image before that version of the gateway
-starts. A successful migration Job is deleted by Argo CD as soon as the hook succeeds, so
+starts. A successful schema-upgrade Job is deleted by Argo CD as soon as the hook succeeds, so
 later syncs do not depend on cleaning up a retained successful hook. `BeforeHookCreation`
 remains as a defensive rerun policy for a fixed-name Job, while failed Jobs are retained
 for diagnostics.
 
-The migration pod receives only the PostgreSQL username/password from the runtime
+The schema-upgrade pod receives only the PostgreSQL username/password from the runtime
 Secret. Provider credentials and the LiteLLM master key are not projected into the
-migration pod.
+schema-upgrade pod.
 
 ## Network boundary
 
@@ -344,8 +344,8 @@ A gateway-backed Hindsight egress policy permits only DNS, its tenant PostgreSQL
 binding, and TCP/4000 to `txo-ai-gateway`. Hindsight receives no generic provider
 Internet egress.
 
-`NetworkPolicy/txo-ai-gateway-migration-egress` separately limits the migration
-Job to DNS plus TCP/5432 toward `postgresql-shared`. The migration pod uses a
+`NetworkPolicy/txo-ai-gateway-schema-upgrade-egress` separately limits the schema-upgrade
+Job to DNS plus TCP/5432 toward `postgresql-shared-recovery`. The schema-upgrade pod uses a
 distinct `app.kubernetes.io/name` label and is never selected by
 `Service/txo-ai-gateway`.
 
