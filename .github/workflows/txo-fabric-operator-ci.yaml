@@ -199,9 +199,8 @@ jobs:
 
           echo "✅ All generated CRDs are referenced by Kustomize"
 
-      - name: Assert Hermes private API stays absent from selected production render
-        # The opt-in contract is source-only; never select any API process,
-        # private/public API Service, credential dependency or listener.
+      - name: Prepare Kustomize for internal API canary policy verification
+        # The following gate permits only one pinned internal Open WebUI → Electra path.
         uses: ./.github/actions/setup-k8s-tools
 
       - name: Verify selected production has only the approved internal Hermes API canary
