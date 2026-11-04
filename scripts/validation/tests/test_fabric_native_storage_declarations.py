@@ -15,6 +15,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[3]
 TENANTS = ROOT / "apps/60-services/txo-fabric/tenants"
 CONTROLLERS = ROOT / "apps/60-services/txo-fabric/operator/internal/controller"
+PROFILES = ROOT / "apps/60-services/txo-fabric/operator/config/profiles"
+NATIVE_PROFILE_CLASSES = {
+    "AgentRuntimeProfile": {"storage-rwo-retain", "storage-rwo-delete"},
+    "SharedWorkspaceProfile": {"storage-rwx-retain", "storage-rwx-delete"},
+}
+
 ARCHIVED_CSI_STATUS_REFERENCES = (
     "RuntimeStorageMigration",
     "WorkspaceMigration",
@@ -53,6 +59,24 @@ def assert_native_storage_declaration(document: dict) -> None:
             raise AssertionError("AgentIdentity runtime storage requests historical CSI cutover/adoption")
 
 
+def assert_native_storage_profile(document: dict) -> None:
+    """GitOps profiles select stable RWO/RWX capabilities, not CSI backends."""
+    kind = document.get("kind")
+    if kind not in NATIVE_PROFILE_CLASSES:
+        return
+    spec = document.get("spec") or {}
+    storage_class = (
+        (spec.get("storage") or {}).get("storageClassName")
+        if kind == "AgentRuntimeProfile"
+        else spec.get("storageClassName")
+    )
+    if not isinstance(storage_class, str) or storage_class not in NATIVE_PROFILE_CLASSES[kind]:
+        raise AssertionError(
+            f"{kind} declares unsupported {storage_class!r}; "
+            "Fabric profiles must use the native RWO/RWX capability classes"
+        )
+
+
 def assert_no_archived_csi_status_in_controller(code: str) -> None:
     """Archived CSI status remains decodable, never a live routing authority."""
     import re
@@ -86,6 +110,44 @@ class NativeFabricStorageSourceTests(unittest.TestCase):
         assert_no_archived_csi_status_in_controller(
             'func reconcile() { ensureNativePVC(); ensureTenantWorkspace() }'
         )
+
+    def test_gitops_storage_profiles_use_native_classes(self):
+        manifests = sorted(PROFILES.glob("*.yaml"))
+        self.assertTrue(manifests, "Fabric platform profiles missing")
+        found = set()
+        for path in manifests:
+            for document in yaml.safe_load_all(path.read_text(encoding="utf-8")):
+                if not isinstance(document, dict):
+                    continue
+                kind = document.get("kind")
+                if kind not in NATIVE_PROFILE_CLASSES:
+                    continue
+                found.add(kind)
+                with self.subTest(path=str(path.relative_to(ROOT))):
+                    assert_native_storage_profile(document)
+        self.assertEqual(found, set(NATIVE_PROFILE_CLASSES))
+
+    def test_native_profile_policy_rejects_retired_or_wrong_access_classes(self):
+        for kind, location in (
+            ("AgentRuntimeProfile", "storage"),
+            ("SharedWorkspaceProfile", "workspace"),
+        ):
+            for bad in (
+                None, "", "synelia-iscsi-retain", "truenas-nfs-delete",
+                "retired-csi-rwo-retain", "storage-rwo-xfs-retain",
+                "storage-rwx-retain" if kind == "AgentRuntimeProfile" else "storage-rwo-retain",
+            ):
+                spec = (
+                    {"storage": {"storageClassName": bad}}
+                    if location == "storage" else {"storageClassName": bad}
+                )
+                with self.subTest(kind=kind, storageClass=bad), self.assertRaises(AssertionError):
+                    assert_native_storage_profile({"kind": kind, "spec": spec})
+            valid = (
+                {"storage": {"storageClassName": "storage-rwo-delete"}}
+                if location == "storage" else {"storageClassName": "storage-rwx-retain"}
+            )
+            assert_native_storage_profile({"kind": kind, "spec": valid})
 
     def test_all_declared_tenants_have_no_csi_cutover_inputs(self):
         manifests = sorted(TENANTS.glob("*/**/*.yaml"))
