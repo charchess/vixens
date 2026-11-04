@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hairem-openwebui-data
+  namespace: tenant-hairem
+  labels:
+    app.kubernetes.io/name: hairem-openwebui
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 5Gi

@@ -67,8 +67,8 @@ func privateHermesAPIIntent(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv
 		return "InvalidConfiguration", "private API canonical tenant or AgentIdentity binding is invalid"
 	}
 	expectedRef := privateHermesAPICredentialPrefix + agent.Spec.AgentKey
-	if len(expectedRef) > 63 || api.CredentialRef != expectedRef ||
-		!privateHermesAPIObjectName.MatchString(api.CredentialRef) {
+	if len(expectedRef) > 63 || (api.CredentialRef != "" &&
+		(api.CredentialRef != expectedRef || !privateHermesAPIObjectName.MatchString(api.CredentialRef))) {
 		return "InvalidConfiguration", "private API credential reference must use the canonical agent key"
 	}
 	return "NotReady", "private Hermes API network substrate is reconciled; runtime launch and endpoint attestation are not implemented"
@@ -117,7 +117,12 @@ func (r *AgentIdentityReconciler) ensurePrivateHermesAPIResources(ctx context.Co
 				From: []networkingv1.NetworkPolicyPeer{{
 					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": privateHermesAPIBFFNamespace}},
 					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-fabric-webui-bff", "app.kubernetes.io/component": "bff"}},
-				}},
+				},
+					// Tenant-local Open WebUI can reach only this namespace's API.
+					networkingv1.NetworkPolicyPeer{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"app.kubernetes.io/name": "hairem-openwebui",
+					}}},
+				},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(privateHermesAPIPort)}},
 			}},
 		}
