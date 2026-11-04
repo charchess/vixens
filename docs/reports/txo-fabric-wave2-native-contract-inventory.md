@@ -32,6 +32,34 @@ transition can resolve it. Legacy audit `status.runtimeStorageMigration` and
 `status.workspaceMigration` remain stored history, not native reconcile
 inputs. They must not be pruned merely to make the YAML look clean.
 
+## API/CRD and CI classification after native cutover (2026-11-04)
+
+This source classification is checked against the current main API/CRD and
+workflow files, not against live Kubernetes objects. It deliberately separates
+the archived wire contract from current reconciliation authority.
+
+| Surface | Current consumer / proof | Classification | Disposition |
+|---|---|---|---|
+| `AgentIdentity.spec.runtime.storage.retentionPolicy` and `TenantBundle.spec.agentStorage` | Native agent PVC provisioning and retention (#4470, #4384) | **Permanent product contract** | Keep; tenant policy required for a new PVC |
+| `SharedWorkspaceProfile.spec.storageClassName`, `TenantBundle.spec.workspace` scopes | Canonical organization/group/user shared/skills provisioning, exact mount ownership (#4385, #4413) | **Permanent product contract** | Keep; no source/copy Job dependency |
+| `AgentIdentity.spec.runtime.storage.adoptLegacyProfile` (CRD + Go) | Stored CR immutable sentinel; `true` rejected by normal reconcile (#4451) | **Stored-object compatibility** | Keep until verified stored-CR migration; never treat as provisioner opt-in |
+| `AgentIdentity.status.runtimeStorageMigration` (CRD + Go) | Archived source/target claim+UID, copy Job and phase; no active controller input | **Historical audit status** | Preserve wire schema, required UID fields, enum and read-only provenance; never treat `LegacyTargetBinding` as byte proof |
+| `TenantBundle.status.workspaceMigration` (CRD + Go) | Archived list keyed by `sourceClaimName`, source/target UID, phase and Job evidence; no active controller input | **Historical audit status** | Preserve exact list-map key and historical phases pending stored-CR review |
+| `TenantBundle.spec.aiGateway.migration*`, `status.aiGatewayMigration`, LiteLLM PostgreSQL migration Job | Separate one-shot **database schema** lifecycle, not CSI/PV movement (#4387) | **Permanent independent schema migration/incident guard** | Keep under its own fail-closed Job/UID tests; CSI cutover assertions must not delete it |
+| `scripts/validation/tests/test_fabric_native_storage_declarations.py` + `.github/workflows/validate.yaml` unconditional offline job | Rejects old CSI tenant fields, foreign profile StorageClasses and retired CSI status as controller routing input | **Permanent source safety guard** | Keep; extend with exact Kubernetes CRD archive contract to prevent accidental status pruning |
+| `apps/60-services/txo-fabric/operator/api/v1alpha1/storage_native_contract_test.go` | Checks Go JSON archive shape and absence of runtime spec migration fields | **Permanent API safety regression** | Keep alongside *generated CRD* test; Go JSON alone cannot prove Kubernetes does not prune fields |
+| `.github/workflows/synelia-csi-ci.yaml` and `scripts/validation/check_synelia_prod_render.py` | Immutable chart, exact rendered CSI provider and six non-default StorageClasses (#4479) | **Permanent release/source contract** | Keep; render is not a physical copy or recovery attestation |
+| `scripts/validation/fabric_rwx_acceptance.py` | Read-only observations for specific retained RWX data/PV identities (#4357) | **Physical acceptance ledger**, not reconciliation | Keep separately; do not claim passing CI proves tenant bytes or live mounts |
+| PostgreSQL recovery staging #4467; OpenBao retained PV binding #4406; Hermes UMI manual sync #4405 | Still-selected desired-state resource or stateful safety gate | **Physical-gated operational exceptions** | Keep unchanged until specific acceptance and approved cleanup |
+
+**Evidence semantics:** `Bound` and matching PV `claimRef` prove binding
+identity; a completed copy Job can prove its terminal Kubernetes condition;
+a status `LegacyRecovered` or `LegacyTargetBinding` proves only the recorded
+historical classification, **not** content parity. Byte-for-byte copy or
+restoration evidence must be obtained separately. No stored CRD/status schema
+pruning, storage deletion, snapshot/zvol retirement or direct cluster action is
+authorized by this source audit.
+
 ## Required closure evidence
 
 1. **#4387 (LiteLLM, independent):** merged #4453 enables atomic retirement
