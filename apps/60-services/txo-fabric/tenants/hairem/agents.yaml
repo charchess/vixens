@@ -45,6 +45,11 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+    # First Open WebUI canary. The operator issues the unique API key and
+    # attests the private Service; no public Hermes endpoint is created.
+    privateAPI:
+      enabled: true
+      tenantId: TEN00001
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.

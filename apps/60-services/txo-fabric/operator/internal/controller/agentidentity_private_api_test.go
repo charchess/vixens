@@ -96,9 +96,6 @@ func TestPrivateHermesAPIIntentRejectsForeignMissingAndIncompleteBindings(t *tes
 		name   string
 		mutate func(*fabricv1alpha1.AgentIdentity, *fabricv1alpha1.TenantBundle)
 	}{
-		{"missing credential", func(a *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) {
-			a.Spec.Runtime.PrivateAPI.CredentialRef = ""
-		}},
 		{"cross tenant", func(a *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) {
 			a.Spec.Runtime.PrivateAPI.TenantID = "TEN99999"
 		}},
@@ -251,7 +248,7 @@ func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) 
 		t.Fatalf("private Hermes ingress policy=%#v", ingress.Spec)
 	}
 	rule := ingress.Spec.Ingress[0]
-	if len(rule.Ports) != 1 || rule.Ports[0].Protocol == nil || *rule.Ports[0].Protocol != corev1.ProtocolTCP || rule.Ports[0].Port.IntVal != 8642 || len(rule.From) != 1 {
+	if len(rule.Ports) != 1 || rule.Ports[0].Protocol == nil || *rule.Ports[0].Protocol != corev1.ProtocolTCP || rule.Ports[0].Port.IntVal != 8642 || len(rule.From) != 2 {
 		t.Fatalf("private Hermes ingress rule=%#v", rule)
 	}
 	peer := rule.From[0]
@@ -260,6 +257,12 @@ func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) 
 		LabelName: "txo-fabric-webui-bff", "app.kubernetes.io/component": "bff",
 	}) {
 		t.Fatalf("private Hermes ingress peer=%#v", peer)
+	}
+	openWebUIPeer := rule.From[1]
+	if openWebUIPeer.NamespaceSelector != nil || openWebUIPeer.PodSelector == nil || !reflect.DeepEqual(openWebUIPeer.PodSelector.MatchLabels, map[string]string{
+		"app.kubernetes.io/name": "hairem-openwebui",
+	}) {
+		t.Fatalf("private Hermes Open WebUI ingress peer=%#v", openWebUIPeer)
 	}
 
 	agent.Spec.Runtime.PrivateAPI = nil

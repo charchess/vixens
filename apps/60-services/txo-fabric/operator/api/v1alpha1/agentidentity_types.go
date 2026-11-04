@@ -34,7 +34,7 @@ type AgentRuntimeCapabilityBinding struct {
 // AgentPrivateAPIBinding expresses non-secret private Responses network intent.
 // A valid opt-in provisions only operator-owned Service/NetworkPolicy substrate;
 // it NEVER starts an API Server or reads/mounts a credential in this version.
-// +kubebuilder:validation:XValidation:rule="!has(self.enabled) || !self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
+// +kubebuilder:validation:XValidation:rule="!has(self.enabled) || !self.enabled || (has(self.tenantId) && size(self.tenantId) > 0)",message="enabled private API requires canonical tenantId"
 type AgentPrivateAPIBinding struct {
 	// Enabled is desired future intent, NOT activation. Omitted/false is safe.
 	// +optional
@@ -49,7 +49,7 @@ type AgentPrivateAPIBinding struct {
 	TenantID string `json:"tenantId,omitempty"`
 
 	// CredentialRef is a NON-SECRET reference name, not a secret or token.
-	// It must equal hermes-api-<canonical agentKey>. Never read/mounted here.
+	// When set, it must equal hermes-api-<canonical agentKey>; omission derives that canonical name. Never read/mounted here.
 	// +optional
 	// +kubebuilder:validation:Pattern=`^hermes-api-[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
 	// +kubebuilder:validation:MaxLength=63

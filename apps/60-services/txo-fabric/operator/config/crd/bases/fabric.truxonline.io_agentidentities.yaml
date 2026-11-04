@@ -169,7 +169,7 @@ spec:
                       credentialRef:
                         description: |-
                           CredentialRef is a NON-SECRET reference name, not a secret or token.
-                          It must equal hermes-api-<canonical agentKey>. Never read/mounted here.
+                          When set, it must equal hermes-api-<canonical agentKey>; omission derives that canonical name. Never read/mounted here.
                         maxLength: 63
                         pattern: ^hermes-api-[a-z0-9]([a-z0-9-]*[a-z0-9])?$
                         type: string
@@ -192,11 +192,9 @@ spec:
                           rule: self == oldSelf
                     type: object
                     x-kubernetes-validations:
-                    - message: enabled private API requires canonical tenantId and
-                        credentialRef
+                    - message: enabled private API requires canonical tenantId
                       rule: '!has(self.enabled) || !self.enabled || (has(self.tenantId)
-                        && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef)
-                        > 0)'
+                        && size(self.tenantId) > 0)'
                   profileRef:
                     default: hermes-default
                     description: ProfileRef references an AgentRuntimeProfile by metadata.name.

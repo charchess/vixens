@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hairem-openwebui
+  namespace: tenant-hairem
+  labels:
+    app.kubernetes.io/name: hairem-openwebui
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hairem-openwebui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hairem-openwebui
+        app.kubernetes.io/part-of: txo-fabric
+        fabric.truxonline.io/private-hermes-client: "true"
+    spec:
+      serviceAccountName: hairem-openwebui
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: openwebui
+          image: ghcr.io/open-webui/open-webui@sha256:fab6ade6b58b92d8600a9bb90de8547b4ce5473087e69bb81fbf234e46b11b1d
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: WEBUI_NAME
+              value: hAIrem Chat
+            - name: WEBUI_URL
+              value: https://chat.hairem.truxonline.com
+            - name: WEBUI_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hairem-openwebui-runtime
+                  key: webui-secret-key
+            - name: ENABLE_OLLAMA_API
+              value: "false"
+            - name: ENABLE_SIGNUP
+              value: "true"
+            - name: OPENAI_API_BASE_URLS
+              value: http://hermes-usr000001-agt00002:8642/v1
+            - name: OPENAI_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-api-usr000001-agt00002
+                  key: api-key
+            - name: OFFLINE_MODE
+              value: "true"
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { cpu: "1", memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hairem-openwebui-data
