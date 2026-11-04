@@ -17,9 +17,11 @@ make a future provider change appear to require application changes.
 
 Issue #3959 established the required platform direction: upper layers consume a
 small explicit catalogue of capabilities rather than NAS paths, protocols, provider
-names, or historical CSI identities. The official CSI driver is now physically
-validated in parallel with `retired-csi`; existing PVs retain their original CSI
-identity and cannot be adopted by changing a class name.
+names, or historical CSI identities. The initial rollout validated the official
+CSI in parallel with the retired provisioner. That rollout is historical, not
+an ongoing prerequisite for the current provider-neutral classes. Existing
+bound PVs retain their original CSI identity and cannot be adopted by
+changing a class name.
 
 ## Decision
 
