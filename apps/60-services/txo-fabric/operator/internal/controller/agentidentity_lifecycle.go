@@ -10,6 +10,7 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -132,8 +133,8 @@ func verifyAgentDeletionOwnership(obj client.Object, agent *fabricv1alpha1.Agent
 	}
 	labels := obj.GetLabels()
 	for label, expected := range map[string]string{
-		LabelPartOf: "txo-fabric",
-		LabelAgent: agent.Spec.AgentKey,
+		LabelPartOf:   "txo-fabric",
+		LabelAgent:    agent.Spec.AgentKey,
 		LabelInstance: agent.Spec.AgentKey,
 	} {
 		if labels[label] != expected {
@@ -300,7 +301,6 @@ func (r *AgentIdentityReconciler) requestsForRuntimePVC(ctx context.Context, obj
 	return nil
 }
 
-
 // A workspace PVC/PV can be replaced or re-labelled after an agent is
 // deployed. Route events by namespace/claimRef, never mutable ownership
 // labels; otherwise stripping a forged label would hide the event.
@@ -377,6 +377,29 @@ func (r *AgentIdentityReconciler) requestsForNativeWorkspaceProfile(ctx context.
 	return requests
 }
 
+// requestsForPrivateHermesAPIEndpoint rechecks an AgentIdentity whenever its
+// selected runtime Pod or Service EndpointSlice changes. Names and labels are
+// only routing hints here; attestation itself revalidates ownership and UID.
+func (r *AgentIdentityReconciler) requestsForPrivateHermesAPIEndpoint(ctx context.Context, obj client.Object) []reconcile.Request {
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return nil
+	}
+	serviceName := obj.GetLabels()[discoveryv1.LabelServiceName]
+	instance := obj.GetLabels()[LabelInstance]
+	requests := make([]reconcile.Request, 0, 1)
+	for i := range agents.Items {
+		agent := &agents.Items[i]
+		if tenantNamespace(agent.Spec.TenantRef.Name) != obj.GetNamespace() {
+			continue
+		}
+		if instance == agent.Spec.AgentKey || serviceName == runtimeName(agent.Spec.AgentKey) {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: agent.Name}})
+		}
+	}
+	return requests
+}
+
 func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.APIReader == nil {
 		r.APIReader = mgr.GetAPIReader()
@@ -391,6 +414,8 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&fabricv1alpha1.SharedWorkspaceProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForNativeWorkspaceProfile)).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Service{}).
+		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(r.requestsForPrivateHermesAPIEndpoint)).
+		Watches(&discoveryv1.EndpointSlice{}, handler.EnqueueRequestsFromMapFunc(r.requestsForPrivateHermesAPIEndpoint)).
 		Owns(&networkingv1.Ingress{}).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
