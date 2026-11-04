@@ -16,6 +16,8 @@ class GatewayPostgresqlEgressTests(unittest.TestCase):
         clusters = {doc["spec"]["cluster"]["name"] for doc in docs
                     if doc and doc.get("kind") in ("Database", "DatabaseRole")}
         self.assertEqual(clusters, {"postgresql-shared-recovery"})
+        names = {doc["metadata"]["name"] for doc in docs if doc and doc.get("kind") in ("Database", "DatabaseRole")}
+        self.assertEqual(names, {"txo-ai-gateway-role-recovery", "txo-ai-gateway-database-recovery"})
         for filename in ("networkpolicy.yaml", "schema-upgrade-networkpolicy.yaml"):
             with self.subTest(policy=filename):
                 policy = yaml.safe_load((GATEWAY / filename).read_text())
