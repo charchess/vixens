@@ -51,14 +51,17 @@ incomplete or identical classes, and provider-specific CSI driver names in
 those two fields. This is **declarative admission by CI**, not a new operator
 default and not a physical volume migration.
 
-For older Kubernetes TenantBundles that were stored before
-`spec.agentStorage` was introduced, the operator still decodes and
-reconciles the historical profile-based class fallback; deleting that
-compatibility branch would require a separate stored-CR inventory and
-physical-volume gate. An unrelated arbitrary third tenant has no reason
-to acquire that fallback when declared new in GitOps. The current CI guard
-deliberately requires the existing published pair of RWO capability names;
-changing the catalog requires a separately reviewed contract update.
+For older Kubernetes TenantBundles stored before
+`spec.agentStorage` was introduced, the operator can continue reconciling
+an **existing, ownership-verified** RWO PVC with its immutable class and
+exact PV claimRef, including after a Hermes profile class change (#4384).
+It cannot provision a missing/replacement claim without an explicit tenant
+storage policy (#4470). This compatibility is not authority to adopt an
+unlabeled claim or to copy data. The GitOps source guard also requires all
+platform AgentRuntimeProfile and SharedWorkspaceProfile declarations to use
+their respective native RWO and RWX capability classes; the profile is not
+a migration or implicit new-claim storage policy. Changing the catalog
+requires a separately reviewed contract update.
 
 ## Decision
 
