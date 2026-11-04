@@ -103,6 +103,8 @@ jobs:
             > /tmp/synelia-prod-csi-companion.yaml
           kubeconform -strict -ignore-missing-schemas -summary \
             /tmp/synelia-prod-csi-render.yaml /tmp/synelia-prod-csi-companion.yaml
+          python3 scripts/validation/check_synelia_prod_render.py \
+            /tmp/synelia-prod-csi-render.yaml
           python3 - <<'PY'
           from pathlib import Path
 
@@ -119,16 +121,6 @@ jobs:
           assert "ghcr.io/truenas/truenas-csi:v1.4.0" in rendered
           assert "192.168.200.244" not in rendered + companion + app
           assert "kind: Secret" not in rendered + companion + app
-          for storage_class in (
-              "storage-rwx-retain",
-              "storage-rwx-delete",
-              "storage-rwo-retain",
-              "storage-rwo-delete",
-              "storage-rwo-xfs-retain",
-              "storage-rwo-xfs-delete",
-          ):
-              assert storage_class in rendered
-          assert "storageclass.kubernetes.io/is-default-class: \"false\"" in rendered
           for parent in (
               "k8s/vixens/nfs",
               "k8s/vixens/iscsi",
@@ -136,5 +128,5 @@ jobs:
               assert parent in rendered
           assert "app: synelia-prod-csi-controller" in companion
           assert "app: synelia-prod-csi-node" in companion
-          print("PASS: active production Synelia CSI follows the canonical contract and remains isolated from legacy CSI")
+          print("PASS: production CSI Argo selection and companion resource boundaries")
           PY
