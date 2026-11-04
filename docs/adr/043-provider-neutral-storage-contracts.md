@@ -76,6 +76,21 @@ decision. Historical `retired-csi` and Synelia staging classes remain for the
 PVs already bound to them. Each consumer migration creates a separately reviewed
 replacement claim and follows an exclusive, verified data-copy and rollback gate.
 
+## Source validation and operational boundary
+
+The production CSI Helm release must render exactly one official `CSIDriver`
+and the six non-default StorageClasses above. Each class must bind to the
+declared production CSI provisioner, matching access protocol, filesystem,
+binding mode and reclaim policy. This is checked on the **rendered objects**,
+not by finding class names inside a YAML string. A credential `Secret` must
+not be materialized by the chart.
+
+These offline checks verify GitOps declarations only. Copying, restoring or
+retiring pre-existing PVC/PV data is bounded maintenance and needs its own
+reviewed procedure and explicitly approved desired-state change. No source
+test, completed Job or PVC `Bound` phase is evidence of byte integrity or
+permission to delete a stateful volume.
+
 ## Consequences
 
 ### Positive

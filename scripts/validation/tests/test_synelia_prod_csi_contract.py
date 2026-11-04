@@ -1,6 +1,8 @@
 """Production Synelia CSI contract: durable names, parallel ownership, no default."""
 from __future__ import annotations
 
+from copy import deepcopy
+import importlib.util
 from pathlib import Path
 import unittest
 
@@ -13,6 +15,13 @@ ROOT_KUSTOMIZATION = ROOT / "argocd/overlays/prod/kustomization.yaml"
 ESO = ROOT / "apps/01-storage/synelia-csi/prod/externalsecret.yaml"
 NAMESPACE = ROOT / "apps/01-storage/synelia-csi/prod/namespace.yaml"
 NETWORK_POLICY = ROOT / "apps/01-storage/synelia-csi/prod/networkpolicy.yaml"
+SPEC = importlib.util.spec_from_file_location(
+    "check_synelia_prod_render",
+    ROOT / "scripts/validation/check_synelia_prod_render.py",
+)
+CHECKER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(CHECKER)
+
 EXPECTED = {
     "storage-rwx-retain",
     "storage-rwx-delete",
@@ -47,6 +56,57 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
                 self.assertIn("nfsvers=4.1", item["mountOptions"])
                 self.assertEqual(item["volumeBindingMode"], "Immediate")
                 self.assertEqual(parent, "k8s/vixens/nfs")
+
+    def test_structured_helm_render_contract_rejects_foreign_provisioners(self) -> None:
+        driver = {"kind": "CSIDriver", "metadata": {"name": CHECKER.EXPECTED_DRIVER}}
+        classes = []
+        for name in sorted(EXPECTED):
+            rwo = name.startswith("storage-rwo-")
+            params = {
+                "protocol": "iscsi" if rwo else "nfs",
+                "datasetPath": "k8s/vixens/iscsi" if rwo else "k8s/vixens/nfs",
+            }
+            if rwo:
+                params["fsType"] = "xfs" if "-xfs-" in name else "ext4"
+            classes.append({
+                "kind": "StorageClass",
+                "metadata": {"name": name, "annotations": {
+                    "storageclass.kubernetes.io/is-default-class": "false",
+                }},
+                "provisioner": CHECKER.EXPECTED_DRIVER,
+                "reclaimPolicy": name.rsplit("-", 1)[-1].capitalize(),
+                "parameters": params,
+                "volumeBindingMode": "WaitForFirstConsumer" if rwo else "Immediate",
+                "mountOptions": [] if rwo else ["nfsvers=4.1"],
+            })
+        valid = [driver, *classes]
+        CHECKER.assert_production_render(valid)
+
+        mutations = {
+            "foreign provisioner": lambda docs: docs[1].update(provisioner="retired.csi.example"),
+            "missing driver": lambda docs: docs.pop(0),
+            "duplicate class": lambda docs: docs.append(deepcopy(docs[1])),
+            "unexpected class": lambda docs: docs[1]["metadata"].update(name="retired-class"),
+            "default class": lambda docs: docs[1]["metadata"]["annotations"].update({
+                "storageclass.kubernetes.io/is-default-class": "true",
+            }),
+            "missing non-default annotation": lambda docs: docs[1]["metadata"].pop("annotations"),
+            "wrong reclaim": lambda docs: docs[1].update(reclaimPolicy="Retain"),
+            "foreign class parent": lambda docs: docs[1]["parameters"].update(datasetPath="legacy/vols"),
+            "injected Secret": lambda docs: docs.append({"kind": "Secret", "metadata": {"name": "credential"}}),
+        }
+        # The chosen class may already use Retain; choose the opposite value
+        # to keep the reclaim-policy case a meaningful negative test.
+        for label, mutate in mutations.items():
+            docs = deepcopy(valid)
+            if label == "wrong reclaim":
+                docs[1]["reclaimPolicy"] = (
+                    "Delete" if docs[1]["reclaimPolicy"] == "Retain" else "Retain"
+                )
+            else:
+                mutate(docs)
+            with self.subTest(label=label), self.assertRaises(AssertionError):
+                CHECKER.assert_production_render(docs)
 
     def test_activation_and_credential_boundary(self) -> None:
         app = yaml.safe_load(APP.read_text())
