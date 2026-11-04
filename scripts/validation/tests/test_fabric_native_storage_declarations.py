@@ -21,6 +21,9 @@ NATIVE_PROFILE_CLASSES = {
     "SharedWorkspaceProfile": {"storage-rwx-retain", "storage-rwx-delete"},
 }
 
+AGENT_CRD = ROOT / "apps/60-services/txo-fabric/operator/config/crd/bases/fabric.truxonline.io_agentidentities.yaml"
+TENANT_CRD = ROOT / "apps/60-services/txo-fabric/operator/config/crd/bases/fabric.truxonline.io_tenantbundles.yaml"
+
 ARCHIVED_CSI_STATUS_REFERENCES = (
     "RuntimeStorageMigration",
     "WorkspaceMigration",
@@ -75,6 +78,55 @@ def assert_native_storage_profile(document: dict) -> None:
             f"{kind} declares unsupported {storage_class!r}; "
             "Fabric profiles must use the native RWO/RWX capability classes"
         )
+
+
+def assert_native_csi_crd_compatibility(agent_crd: dict, tenant_crd: dict) -> None:
+    """Archived CSI status must survive API upgrades, never return as spec intent."""
+    def version_schema(document: dict) -> dict:
+        versions = document.get("spec", {}).get("versions", [])
+        matches = [v for v in versions if v.get("name") == "v1alpha1" and v.get("served")]
+        if len(matches) != 1:
+            raise AssertionError("expected exactly one served Fabric v1alpha1 schema")
+        return matches[0]["schema"]["openAPIV3Schema"]["properties"]
+
+    agent_schema = version_schema(agent_crd)
+    tenant_schema = version_schema(tenant_crd)
+    agent_spec = agent_schema["spec"]["properties"]
+    tenant_spec = tenant_schema["spec"]["properties"]
+    agent_storage = agent_spec["runtime"]["properties"]["storage"]["properties"]
+    workspace = tenant_spec["workspace"]["properties"]
+    if {"migration", "claimSuffix", "targetClaimSuffix", "copyJobName"} & set(agent_storage):
+        raise AssertionError("retired CSI agent storage fields returned to active CRD spec")
+    if {"migration", "claimSuffix", "targetClaimSuffix", "copyJobPrefix"} & set(workspace):
+        raise AssertionError("retired CSI workspace fields returned to active CRD spec")
+    if "adoptLegacyProfile" not in agent_storage:
+        raise AssertionError("stored AgentIdentity adoptLegacyProfile sentinel was pruned")
+
+    agent_status = agent_schema["status"]["properties"].get("runtimeStorageMigration")
+    workspace_status = tenant_schema["status"]["properties"].get("workspaceMigration")
+    if not isinstance(agent_status, dict) or not isinstance(workspace_status, dict):
+        raise AssertionError("archived CSI status disappeared from Kubernetes CRD schema")
+    required_binding = {
+        "sourceClaimName", "sourcePVCUID", "targetClaimName",
+        "targetPVCUID", "phase", "verificationResult",
+    }
+    for name, node in (
+        ("runtimeStorageMigration", agent_status),
+        ("workspaceMigration", workspace_status.get("items", {})),
+    ):
+        fields = node.get("properties", {})
+        if not required_binding <= set(fields) or not required_binding <= set(node.get("required", [])):
+            raise AssertionError(f"{name} lost required source/target UID or verification fields")
+        if "LegacyRecovered" not in fields["phase"].get("enum", []):
+            raise AssertionError(f"{name} lost archived LegacyRecovered phase")
+    if not {"Job", "LegacyTargetBinding"} <= set(
+        agent_status["properties"].get("evidenceSource", {}).get("enum", [])
+    ):
+        raise AssertionError("archived RWO evidence-source enum was pruned")
+    if workspace_status.get("type") != "array" or workspace_status.get(
+        "x-kubernetes-list-map-keys"
+    ) != ["sourceClaimName"]:
+        raise AssertionError("workspace archive list identity was changed")
 
 
 def assert_no_archived_csi_status_in_controller(code: str) -> None:
@@ -148,6 +200,36 @@ class NativeFabricStorageSourceTests(unittest.TestCase):
                 if location == "storage" else {"storageClassName": "storage-rwx-retain"}
             )
             assert_native_storage_profile({"kind": kind, "spec": valid})
+
+    def test_generated_crds_preserve_archived_status_without_cutover_spec(self):
+        agent_crd = yaml.safe_load(AGENT_CRD.read_text(encoding="utf-8"))
+        tenant_crd = yaml.safe_load(TENANT_CRD.read_text(encoding="utf-8"))
+        assert_native_csi_crd_compatibility(agent_crd, tenant_crd)
+
+    def test_crd_archive_fail_closed_mutations(self):
+        from copy import deepcopy
+
+        agent = yaml.safe_load(AGENT_CRD.read_text(encoding="utf-8"))
+        tenant = yaml.safe_load(TENANT_CRD.read_text(encoding="utf-8"))
+        def properties(crd):
+            return crd["spec"]["versions"][0]["schema"]["openAPIV3Schema"]["properties"]
+
+        mutations = (
+            ("missing agent archive", lambda a, t: properties(a)["status"]["properties"].pop("runtimeStorageMigration")),
+            ("missing workspace archive", lambda a, t: properties(t)["status"]["properties"].pop("workspaceMigration")),
+            ("missing agent target UID", lambda a, t: properties(a)["status"]["properties"]["runtimeStorageMigration"]["properties"].pop("targetPVCUID")),
+            ("missing workspace source UID", lambda a, t: properties(t)["status"]["properties"]["workspaceMigration"]["items"]["properties"].pop("sourcePVCUID")),
+            ("lost workspace map key", lambda a, t: properties(t)["status"]["properties"]["workspaceMigration"].pop("x-kubernetes-list-map-keys")),
+            ("lost legacy phase", lambda a, t: properties(a)["status"]["properties"]["runtimeStorageMigration"]["properties"]["phase"].update(enum=["Succeeded"])),
+            ("lost identity sentinel", lambda a, t: properties(a)["spec"]["properties"]["runtime"]["properties"]["storage"]["properties"].pop("adoptLegacyProfile")),
+            ("reintroduced agent cutover", lambda a, t: properties(a)["spec"]["properties"]["runtime"]["properties"]["storage"]["properties"].update(migration={"type": "object"})),
+            ("reintroduced workspace suffix", lambda a, t: properties(t)["spec"]["properties"]["workspace"]["properties"].update(claimSuffix={"type": "string"})),
+        )
+        for label, change in mutations:
+            mutated_agent, mutated_tenant = deepcopy(agent), deepcopy(tenant)
+            change(mutated_agent, mutated_tenant)
+            with self.subTest(label=label), self.assertRaises(AssertionError):
+                assert_native_csi_crd_compatibility(mutated_agent, mutated_tenant)
 
     def test_all_declared_tenants_have_no_csi_cutover_inputs(self):
         manifests = sorted(TENANTS.glob("*/**/*.yaml"))
