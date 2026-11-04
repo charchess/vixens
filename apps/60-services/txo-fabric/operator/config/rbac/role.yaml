@@ -10,6 +10,7 @@ rules:
   - configmaps
   - namespaces
   - persistentvolumeclaims
+  - pods
   - secrets
   - services
   verbs:
@@ -90,6 +91,14 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
   - watch
 - apiGroups:
   - fabric.truxonline.io

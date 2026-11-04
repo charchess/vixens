@@ -10,6 +10,7 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMeta "k8s.io/apimachinery/pkg/api/meta"
@@ -396,5 +397,98 @@ func TestPrivateHermesAPICredentialRejectsForgedLabelsAndMissingIssuance(t *test
 				t.Fatalf("forged or issuer-less credential must fail closed: ready=%t err=%v", ready, err)
 			}
 		})
+	}
+}
+
+func TestPrivateHermesAPIEndpointAttestationRequiresCompleteRuntimeChain(t *testing.T) {
+	ctx := context.Background()
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	namespace := tenantNamespace(tenant.Name)
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	ready, err := r.privateHermesAPIEndpointAttested(ctx, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready {
+		t.Fatal("missing rollout status, EndpointSlice and Ready Pod must fail closed")
+	}
+}
+
+func TestPrivateHermesAPIEndpointAttestationAcceptsCanonicalReadyRuntime(t *testing.T) {
+	ctx := context.Background()
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	namespace := tenantNamespace(tenant.Name)
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithStatusSubresource(&appsv1.Deployment{}).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+
+	name := runtimeName(agent.Spec.AgentKey)
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	deployment.Status.ObservedGeneration = deployment.Generation
+	deployment.Status.UpdatedReplicas = 1
+	deployment.Status.AvailableReplicas = 1
+	if err := c.Status().Update(ctx, &deployment); err != nil {
+		t.Fatal(err)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: name + "-unit", Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000099"), Labels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "hermes", Ports: []corev1.ContainerPort{{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP}}}}},
+		Status:     corev1.PodStatus{Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}},
+	}
+	port := int32(privateHermesAPIPort)
+	slice := &discoveryv1.EndpointSlice{
+		ObjectMeta:  metav1.ObjectMeta{Name: name + "-unit", Namespace: namespace, Labels: map[string]string{discoveryv1.LabelServiceName: name}},
+		AddressType: discoveryv1.AddressTypeIPv4,
+		Ports:       []discoveryv1.EndpointPort{{Name: stringPtr("responses"), Protocol: protocolPtr(corev1.ProtocolTCP), Port: &port}},
+		Endpoints:   []discoveryv1.Endpoint{{Addresses: []string{"10.42.0.99"}, Conditions: discoveryv1.EndpointConditions{Ready: boolPtr(true)}, TargetRef: &corev1.ObjectReference{Kind: "Pod", Namespace: namespace, Name: pod.Name, UID: pod.UID}}},
+	}
+	if err := c.Create(ctx, pod); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Create(ctx, slice); err != nil {
+		t.Fatal(err)
+	}
+	ready, err := r.privateHermesAPIEndpointAttested(ctx, agent, tenant, namespace)
+	if err != nil || !ready {
+		t.Fatalf("canonical Ready runtime must attest: ready=%t err=%v", ready, err)
+	}
+}
+
+func TestPrivateHermesAPIEndpointConditionRequiresAttestation(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	setPrivateHermesAPIEndpointCondition(agent, tenant, false)
+	condition := apiMeta.FindStatusCondition(agent.Status.Conditions, privateHermesAPICondition)
+	if condition == nil || condition.Status != metav1.ConditionFalse || condition.Reason != "NotReady" {
+		t.Fatalf("unattested condition=%#v", condition)
+	}
+	setPrivateHermesAPIEndpointCondition(agent, tenant, true)
+	condition = apiMeta.FindStatusCondition(agent.Status.Conditions, privateHermesAPICondition)
+	if condition == nil || condition.Status != metav1.ConditionTrue || condition.Reason != "EndpointAttested" {
+		t.Fatalf("attested condition=%#v", condition)
 	}
 }

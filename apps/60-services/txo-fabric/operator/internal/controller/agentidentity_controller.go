@@ -29,7 +29,8 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;sharedworkspaceprofiles;hermesruntimereleases;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services;pods,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices,verbs=get;list;watch
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
@@ -290,6 +291,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "PrivateHermesAPIReady", metav1.ConditionFalse, "PrivateAPINetworkReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
+	privateAPIEndpointAttested, err := r.privateHermesAPIEndpointAttested(ctx, &agent, &tenant, namespace)
+	if err != nil {
+		r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPIEndpointAttestationFailed", err.Error())
+		return ctrl.Result{}, err
+	}
 	if !privateAPICredentialReady {
 		if err := r.deletePrivateHermesAPICredential(ctx, &agent, namespace); err != nil {
 			r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPICredentialWithdrawalFailed", err.Error())
@@ -397,9 +403,8 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionFalse, "DeploymentProgressing", "waiting for the Hermes Deployment to become available")
 		setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionFalse, "RuntimeProgressing", "runtime is still provisioning")
 	}
-	// A valid opt-in is still source-only: never advertise API readiness.
-	// This condition changes no gateway Deployment, Service, Secret or policy.
-	setPrivateHermesAPICondition(&agent, &tenant)
+	// Publish true only after the Service-to-Pod endpoint proof succeeds.
+	setPrivateHermesAPIEndpointCondition(&agent, &tenant, privateAPIEndpointAttested)
 	if !reflect.DeepEqual(previousStatus, agent.Status) {
 		if err := r.Status().Update(ctx, &agent); err != nil {
 			return ctrl.Result{}, err

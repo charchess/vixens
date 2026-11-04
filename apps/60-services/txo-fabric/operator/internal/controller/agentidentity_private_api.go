@@ -13,9 +13,11 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -143,6 +145,17 @@ func (r *AgentIdentityReconciler) deletePrivateHermesAPIResource(ctx context.Con
 
 func setPrivateHermesAPICondition(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) {
 	reason, message := privateHermesAPIIntent(agent, tenant)
+	setCondition(&agent.Status.Conditions, agent.Generation, privateHermesAPICondition,
+		metav1.ConditionFalse, reason, message)
+}
+
+func setPrivateHermesAPIEndpointCondition(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, attested bool) {
+	reason, message := privateHermesAPIIntent(agent, tenant)
+	if reason == "NotReady" && attested {
+		setCondition(&agent.Status.Conditions, agent.Generation, privateHermesAPICondition,
+			metav1.ConditionTrue, "EndpointAttested", "private Hermes API endpoint is attested through the canonical Service, EndpointSlice and Ready Pod")
+		return
+	}
 	setCondition(&agent.Status.Conditions, agent.Generation, privateHermesAPICondition,
 		metav1.ConditionFalse, reason, message)
 }
@@ -332,4 +345,104 @@ func (r *AgentIdentityReconciler) privateHermesAPICredentialExists(ctx context.C
 		return false, nil
 	}
 	return err == nil, err
+}
+
+// privateHermesAPIEndpointAttested proves that the canonical private Service
+// routes to exactly one current Hermes Pod. Missing, stale, foreign, or
+// ambiguous objects are deliberately non-ready; API errors remain visible.
+func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) (bool, error) {
+	if reason, _ := privateHermesAPIIntent(agent, tenant); reason != "NotReady" {
+		return false, nil
+	}
+	name := runtimeName(agent.Spec.AgentKey)
+	selector := map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}
+
+	service := &corev1.Service{}
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, service); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	owner := metav1.GetControllerOf(service)
+	if owner == nil || owner.APIVersion != fabricv1alpha1.GroupVersion.String() || owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID || service.Spec.Type != corev1.ServiceTypeClusterIP || !reflect.DeepEqual(service.Spec.Selector, selector) || len(service.Spec.Ports) != 1 || service.Spec.Ports[0].Name != "responses" || service.Spec.Ports[0].Protocol != corev1.ProtocolTCP || service.Spec.Ports[0].Port != privateHermesAPIPort || service.Spec.Ports[0].TargetPort.IntVal != privateHermesAPIPort {
+		return false, nil
+	}
+
+	deployment := &appsv1.Deployment{}
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	owner = metav1.GetControllerOf(deployment)
+	replicas := int32(1)
+	if deployment.Spec.Replicas != nil {
+		replicas = *deployment.Spec.Replicas
+	}
+	if owner == nil || owner.APIVersion != fabricv1alpha1.GroupVersion.String() || owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID || deployment.Status.ObservedGeneration != deployment.Generation || deployment.Status.UpdatedReplicas != replicas || deployment.Status.AvailableReplicas != replicas {
+		return false, nil
+	}
+
+	var slices discoveryv1.EndpointSliceList
+	if err := r.List(ctx, &slices, client.InNamespace(namespace), client.MatchingLabels{discoveryv1.LabelServiceName: name}); err != nil {
+		return false, err
+	}
+	var targetUID types.UID
+	endpointCount := 0
+	for i := range slices.Items {
+		slice := &slices.Items[i]
+		if slice.AddressType != discoveryv1.AddressTypeIPv4 && slice.AddressType != discoveryv1.AddressTypeIPv6 {
+			return false, nil
+		}
+		portFound := false
+		for _, port := range slice.Ports {
+			if port.Name != nil && *port.Name == "responses" && port.Protocol != nil && *port.Protocol == corev1.ProtocolTCP && port.Port != nil && *port.Port == privateHermesAPIPort {
+				portFound = true
+			}
+		}
+		if !portFound {
+			return false, nil
+		}
+		for _, endpoint := range slice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready || endpoint.TargetRef == nil || endpoint.TargetRef.Kind != "Pod" || endpoint.TargetRef.Namespace != namespace || endpoint.TargetRef.UID == "" {
+				return false, nil
+			}
+			endpointCount++
+			targetUID = endpoint.TargetRef.UID
+		}
+	}
+	if endpointCount != 1 {
+		return false, nil
+	}
+
+	var pods corev1.PodList
+	if err := r.List(ctx, &pods, client.InNamespace(namespace), client.MatchingLabels(selector)); err != nil {
+		return false, err
+	}
+	if len(pods.Items) != 1 {
+		return false, nil
+	}
+	pod := &pods.Items[0]
+	if pod.UID != targetUID || pod.DeletionTimestamp != nil || !podReady(pod) {
+		return false, nil
+	}
+	for _, container := range pod.Spec.Containers {
+		for _, port := range container.Ports {
+			if port.Name == "responses" && port.Protocol == corev1.ProtocolTCP && port.ContainerPort == privateHermesAPIPort {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func podReady(pod *corev1.Pod) bool {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodReady {
+			return condition.Status == corev1.ConditionTrue
+		}
+	}
+	return false
 }
