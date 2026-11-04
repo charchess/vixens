@@ -47,6 +47,7 @@ spec:
       retentionPolicy: Retain
     # First Open WebUI canary. The operator issues the unique API key and
     # attests the private Service; no public Hermes endpoint is created.
+    # Production CI permits this single internal Open WebUI → Electra canary only.
     privateAPI:
       enabled: true
       tenantId: TEN00001
