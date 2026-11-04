@@ -2,14 +2,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: txo-ai-gateway-migrations
+  name: txo-ai-gateway-schema-upgrade
   namespace: txo-fabric-system
   annotations:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
   labels:
-    app.kubernetes.io/name: txo-ai-gateway-migration
+    app.kubernetes.io/name: txo-ai-gateway-schema-upgrade
     app.kubernetes.io/part-of: txo-fabric
     app.kubernetes.io/component: ai-egress
 spec:
@@ -17,10 +17,10 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: txo-ai-gateway-migration
+        app.kubernetes.io/name: txo-ai-gateway-schema-upgrade
         app.kubernetes.io/part-of: txo-fabric
         app.kubernetes.io/component: ai-egress
-        vixens.io/sizing.prisma-migrations: V-scout
+        vixens.io/sizing.schema-upgrade: V-scout
     spec:
       automountServiceAccountToken: false
       restartPolicy: Never
@@ -32,7 +32,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: prisma-migrations
+        - name: schema-upgrade
           image: ghcr.io/berriai/litellm-non_root:v1.102.1
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-ec"]

@@ -12,7 +12,7 @@ metadata:
     app.kubernetes.io/component: ai-egress
 spec:
   cluster:
-    name: postgresql-shared
+    name: postgresql-shared-recovery
   name: txo_ai_gateway
   comment: TXO AI gateway control-plane role
   login: true
@@ -41,7 +41,7 @@ metadata:
     app.kubernetes.io/component: ai-egress
 spec:
   cluster:
-    name: postgresql-shared
+    name: postgresql-shared-recovery
   name: txo_ai_gateway
   owner: txo_ai_gateway
   ensure: present
