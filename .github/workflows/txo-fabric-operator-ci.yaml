@@ -204,27 +204,50 @@ jobs:
         # private/public API Service, credential dependency or listener.
         uses: ./.github/actions/setup-k8s-tools
 
-      - name: Verify selected production has no Hermes API activation
+      - name: Verify selected production has only the approved internal Hermes API canary
         shell: bash
         run: |
           set -euo pipefail
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-prod-hermes-private-api.yaml
-          # A CRD schema describes the future non-secret reference name, but
-          # is not an opted-in AgentIdentity or a selected API listener.
-          # Check actual selected objects rather than CRD schema examples.
+          # CRDs describe opt-in schema. Inspect only selected workload objects.
           awk 'BEGIN { RS = "---"; ORS = "\n---\n" } !/kind: CustomResourceDefinition/ { print }' \
             /tmp/txo-fabric-prod-hermes-private-api.yaml > /tmp/txo-fabric-prod-hermes-selected.yaml
-          if grep -En 'privateAPI:|API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)' /tmp/txo-fabric-prod-hermes-selected.yaml; then
-            echo "::error::Hermes private API configuration or port was selected in prod"
-            exit 1
-          fi
-          # Existing per-agent dashboard ingress is NOT the private API.
-          # Refuse any newly exposed API hostname/name in generated state.
-          if grep -En 'hermes-private-api|hermes-api-server|hermes-api-credential' /tmp/txo-fabric-prod-hermes-selected.yaml; then
-            echo "::error::Unexpected selected private/public Hermes API artifact"
-            exit 1
-          fi
-          echo "PASS: production overlay has no Hermes API listener, credential or service"
+          python3 - /tmp/txo-fabric-prod-hermes-selected.yaml <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          documents = [d for d in Path(sys.argv[1]).read_text().split("\n---\n") if d.strip()]
+          sensitive = re.compile(r"privateAPI:|API_SERVER_(?:ENABLED|KEY)|hermes-api-|(?<![0-9])8642(?![0-9])")
+          hits = [d for d in documents if sensitive.search(d)]
+          if len(hits) != 3:
+              raise SystemExit(f"expected exactly three canary API documents, found {len(hits)}")
+
+          def one(kind, name):
+              found = [d for d in hits if f"kind: {kind}" in d and f"  name: {name}\n" in d]
+              if len(found) != 1:
+                  raise SystemExit(f"expected exactly one {kind}/{name} API canary document")
+              return found[0]
+
+          identity = one("AgentIdentity", "ten00001-usr000001-agt00002")
+          required_identity = ("    privateAPI:\n      enabled: true\n      tenantId: TEN00001",)
+          webui = one("Deployment", "hairem-openwebui")
+          required_webui = (
+              "value: http://hermes-usr000001-agt00002:8642/v1",
+              "name: hermes-api-usr000001-agt00002",
+              "fabric.truxonline.io/private-hermes-client: \"true\"",
+          )
+          policy = one("NetworkPolicy", "hairem-openwebui")
+          required_policy = ("port: 8642", "hermes-agent: usr000001-agt00002")
+          for document, required in ((identity, required_identity), (webui, required_webui), (policy, required_policy)):
+              for needle in required:
+                  if needle not in document:
+                      raise SystemExit(f"approved canary contract missing: {needle}")
+          selected = "\n---\n".join(hits)
+          if re.search(r"API_SERVER_(?:ENABLED|KEY)|hermes-private-api|hermes-api-server|hermes-api-credential", selected):
+              raise SystemExit("unexpected API process, public service, or credential artifact")
+          print("PASS: only the explicitly pinned internal Open WebUI → Electra API canary is selected")
+          PY
 
       - name: Build operator image
         run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator
