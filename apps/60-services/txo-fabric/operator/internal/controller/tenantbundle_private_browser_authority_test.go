@@ -8,6 +8,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/authentik"
+	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/privatebridge"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -85,5 +86,32 @@ func TestBrowserTenantCatalogReturnsOnlyCurrentAuthorizedTenants(t *testing.T) {
 	}
 	if len(unavailable.Tenants) != 0 {
 		t.Fatalf("IAM outage exposed a tenant: %#v", unavailable.Tenants)
+	}
+}
+
+func TestResolvePrivateResponsesAuthorityReturnsOnlyCurrentCanonicalTenant(t *testing.T) {
+	ctx := context.Background()
+	now := time.Date(2026, 11, 4, 15, 45, 0, 0, time.UTC)
+	bundle := humanIdentityTenant("hairem", "TEN00001", "uid-hairem", "client0")
+	bundle.Generation = 7
+	r := preparedHumanIdentityReconciler(t, bundle)
+	r.AuthorizationNow = func() time.Time { return now }
+	markBrowserTenantReady(t, r, bundle, now)
+
+	out, err := r.ResolvePrivateResponsesAuthority(ctx, privatebridge.ResponsesAuthorityRequest{
+		Operation: privatebridge.ResponsesAuthorityResolveTenant,
+		TenantKey: bundle.Name, FabricTenantID: bundle.Spec.TenantID,
+	}, now)
+	if err != nil || out.Tenant == nil || out.Tenant.TenantKey != bundle.Name ||
+		out.Tenant.FabricTenantID != bundle.Spec.TenantID || out.Tenant.TenantBundleUID != string(bundle.UID) || out.Tenant.Status != "Ready" {
+		t.Fatalf("canonical ready tenant was not resolved safely: out=%#v err=%v", out, err)
+	}
+
+	wrongID, err := r.ResolvePrivateResponsesAuthority(ctx, privatebridge.ResponsesAuthorityRequest{
+		Operation: privatebridge.ResponsesAuthorityResolveTenant,
+		TenantKey: bundle.Name, FabricTenantID: "TEN99999",
+	}, now)
+	if err == nil || wrongID.Tenant != nil {
+		t.Fatalf("mismatched immutable tenant ID resolved: out=%#v err=%v", wrongID, err)
 	}
 }

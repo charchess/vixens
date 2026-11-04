@@ -136,6 +136,14 @@ func main() {
 				Client: mgr.GetClient(), APIReader: mgr.GetAPIReader(), Scheme: mgr.GetScheme(),
 			}},
 		}
+		responsesAuthorityHandler := &privatebridge.ResponsesAuthorityHandler{
+			Contract: handler.Contract,
+			Tokens:   handler.Tokens,
+			Nonces:   handler.Nonces,
+			Authorities: privateResponsesAuthorityResolver{controller: &controller.TenantBundleReconciler{
+				Client: mgr.GetClient(), APIReader: mgr.GetAPIReader(), Scheme: mgr.GetScheme(),
+			}},
+		}
 		if err := mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 			listener, err := net.Listen("tcp", ":8090")
 			if err != nil {
@@ -146,6 +154,7 @@ func main() {
 			mux.Handle(privatebridge.ActiveHumanPath, activeHumanHandler)
 			mux.Handle(privatebridge.EnrollmentPath, enrollmentHandler)
 			mux.Handle(privatebridge.BrowserAuthorityPath, browserAuthorityHandler)
+			mux.Handle(privatebridge.ResponsesAuthorityPath, responsesAuthorityHandler)
 			server := &http.Server{
 				Handler: mux, ReadHeaderTimeout: 5 * time.Second,
 				ReadTimeout: 8 * time.Second, WriteTimeout: 8 * time.Second,
@@ -193,6 +202,17 @@ func (r privateBrowserAuthorityResolver) ResolveBrowserAuthority(ctx context.Con
 		return privatebridge.BrowserAuthorityResponse{}, errors.New("private browser authority unavailable")
 	}
 	return r.controller.ResolvePrivateBrowserAuthority(ctx, q, now)
+}
+
+type privateResponsesAuthorityResolver struct {
+	controller *controller.TenantBundleReconciler
+}
+
+func (r privateResponsesAuthorityResolver) ResolveResponsesAuthority(ctx context.Context, q privatebridge.ResponsesAuthorityRequest, now time.Time) (privatebridge.ResponsesAuthorityResponse, error) {
+	if r.controller == nil {
+		return privatebridge.ResponsesAuthorityResponse{}, errors.New("private responses authority unavailable")
+	}
+	return r.controller.ResolvePrivateResponsesAuthority(ctx, q, now)
 }
 
 type privateBFFActiveHuman struct {
