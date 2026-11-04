@@ -26,11 +26,11 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
       ports:
-        - { protocol: UDP, port: 53 }
-        - { protocol: TCP, port: 53 }
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
     - to:
         - podSelector:
             matchLabels:
               hermes-agent: usr000001-agt00002
       ports:
-        - { protocol: TCP, port: 8642 }
+        - {protocol: TCP, port: 8642}

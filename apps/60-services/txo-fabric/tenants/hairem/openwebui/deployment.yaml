@@ -25,7 +25,7 @@ spec:
       serviceAccountName: hairem-openwebui
       automountServiceAccountToken: false
       securityContext:
-        seccompProfile: { type: RuntimeDefault }
+        seccompProfile: {type: RuntimeDefault}
       containers:
         - name: openwebui
           image: ghcr.io/open-webui/open-webui@sha256:fab6ade6b58b92d8600a9bb90de8547b4ce5473087e69bb81fbf234e46b11b1d
@@ -57,23 +57,23 @@ spec:
             - name: OFFLINE_MODE
               value: "true"
           startupProbe:
-            httpGet: { path: /health, port: http }
+            httpGet: {path: /health, port: http}
             periodSeconds: 10
             failureThreshold: 30
           readinessProbe:
-            httpGet: { path: /health, port: http }
+            httpGet: {path: /health, port: http}
             periodSeconds: 10
             failureThreshold: 3
           livenessProbe:
-            httpGet: { path: /health, port: http }
+            httpGet: {path: /health, port: http}
             periodSeconds: 20
             failureThreshold: 3
           resources:
-            requests: { cpu: 100m, memory: 512Mi }
-            limits: { cpu: "1", memory: 1Gi }
+            requests: {cpu: 100m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities: { drop: [ALL] }
+            capabilities: {drop: [ALL]}
           volumeMounts:
             - name: data
               mountPath: /app/backend/data
