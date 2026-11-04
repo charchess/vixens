@@ -1,7 +1,7 @@
 ---
-# Official truenas/truenas-csi v1.4.0 — production parallel deployment.
-# It must never adopt retired-csi volumes. StorageClass names follow the
-# durable Synelia storage contract (no environment suffix).
+# Official truenas/truenas-csi v1.4.0 — production storage provider.
+# Existing bound PVs retain their immutable CSI identities. StorageClass
+# names expose stable platform capabilities, not backend implementation.
 fullnameOverride: synelia-prod-csi
 driverName: synelia.prod.csi.truenas.io
 kubeletDir: /var/lib/kubelet
@@ -48,7 +48,7 @@ controller:
     vixens.io/no-long-connections: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
-    vixens.io/sizing-rationale: "Parallel production CSI controller; six containers"
+    vixens.io/sizing-rationale: "Official production CSI controller; six containers"
   resources:
     requests:
       cpu: 100m
@@ -83,8 +83,8 @@ volumeSnapshotClass:
 # provider-neutral: applications select access/reclaim guarantees, not TrueNAS,
 # iSCSI, NFS, a ZFS path or a historical driver identity. Retain is mandatory for
 # durable state; Delete is reserved for explicitly disposable data. The official
-# driver parents are the canonical Vixens ZFS parents; the CSI creates its own
-# per-claim children alongside the legacy `vols` subtree during migration.
+# driver parents are the canonical Vixens ZFS parents; CSI provisions its
+# own per-claim children without adopting independently managed volumes.
 storageClasses:
   - name: storage-rwx-retain
     isDefault: false
