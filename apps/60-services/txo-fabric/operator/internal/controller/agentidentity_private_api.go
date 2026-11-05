@@ -412,6 +412,11 @@ func privateHermesAPIEndpointAttested(ctx context.Context, reader client.Reader,
 	endpointCount := 0
 	for i := range slices.Items {
 		slice := &slices.Items[i]
+		if slice.Labels[discoveryv1.LabelServiceName] != name ||
+			slice.Labels[discoveryv1.LabelManagedBy] != "endpointslice-controller.k8s.io" ||
+			!hasPrivateHermesAPIControllerOwner(slice, corev1.SchemeGroupVersion.String(), "Service", service.Name, service.UID) {
+			return false, nil
+		}
 		if slice.AddressType != discoveryv1.AddressTypeIPv4 && slice.AddressType != discoveryv1.AddressTypeIPv6 {
 			return false, nil
 		}
@@ -447,6 +452,23 @@ func privateHermesAPIEndpointAttested(ctx context.Context, reader client.Reader,
 	if pod.UID != targetUID || pod.DeletionTimestamp != nil || !podReady(pod) {
 		return false, nil
 	}
+	podOwner := metav1.GetControllerOf(pod)
+	if podOwner == nil || podOwner.APIVersion != appsv1.SchemeGroupVersion.String() || podOwner.Kind != "ReplicaSet" || podOwner.Name == "" || podOwner.UID == "" {
+		return false, nil
+	}
+	replicaSet := &appsv1.ReplicaSet{}
+	if err := reader.Get(ctx, client.ObjectKey{Namespace: namespace, Name: podOwner.Name}, replicaSet); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if replicaSet.UID != podOwner.UID || !hasPrivateHermesAPIControllerOwner(replicaSet, appsv1.SchemeGroupVersion.String(), "Deployment", deployment.Name, deployment.UID) {
+		return false, nil
+	}
+	if !privateHermesAPIReplicaSetMatchesDeployment(replicaSet, deployment) {
+		return false, nil
+	}
 	for _, container := range pod.Spec.Containers {
 		for _, port := range container.Ports {
 			if port.Name == "responses" && port.Protocol == corev1.ProtocolTCP && port.ContainerPort == privateHermesAPIPort {
@@ -455,6 +477,20 @@ func privateHermesAPIEndpointAttested(ctx context.Context, reader client.Reader,
 		}
 	}
 	return false, nil
+}
+
+func hasPrivateHermesAPIControllerOwner(object metav1.Object, apiVersion, kind, name string, uid types.UID) bool {
+	owner := metav1.GetControllerOf(object)
+	return owner != nil && owner.APIVersion == apiVersion && owner.Kind == kind && owner.Name == name && owner.UID == uid && uid != ""
+}
+
+func privateHermesAPIReplicaSetMatchesDeployment(replicaSet *appsv1.ReplicaSet, deployment *appsv1.Deployment) bool {
+	template := replicaSet.Spec.Template.DeepCopy()
+	delete(template.Labels, appsv1.DefaultDeploymentUniqueLabelKey)
+	if len(template.Labels) == 0 {
+		template.Labels = nil
+	}
+	return reflect.DeepEqual(*template, deployment.Spec.Template)
 }
 
 func podReady(pod *corev1.Pod) bool {
