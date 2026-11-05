@@ -5,6 +5,8 @@ import importlib.util
 from pathlib import Path
 import unittest
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[3]
 CHECKER_FILE = ROOT / "scripts/validation/check_fabric_private_api_render.py"
 SPEC = importlib.util.spec_from_file_location("fabric_private_api_render", CHECKER_FILE)
@@ -113,6 +115,33 @@ class PrivateAPISourceContractTests(unittest.TestCase):
             with self.subTest(kind=kind, content=content):
                 self.assertTrue(check([self.tenant_a, self.agent_a,
                                        {"kind": kind, **content}]))
+
+    def test_operator_ci_invokes_generic_contract_not_pinned_canary(self):
+        """The operator gate must not regress to a named-client allowlist."""
+        workflow_path = ROOT / ".github/workflows/txo-fabric-operator-ci.yaml"
+        workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+        steps = workflow["jobs"]["test"]["steps"]
+        commands = "\\n".join(str(step.get("run", "")) for step in steps)
+        self.assertIn(
+            "python3 scripts/validation/check_fabric_private_api_render.py ",
+            commands,
+        )
+        self.assertIn("kustomize build apps/60-services/txo-fabric/overlays/prod", commands)
+        self.assertIn(
+            "python3 -m unittest discover -s scripts/validation/tests "
+            "-p test_fabric_private_api_render.py -v",
+            commands,
+        )
+        self.assertIn("go test -race", commands)
+        for retired in (
+            "expected exactly three canary API documents",
+            "only the approved internal Hermes API canary",
+            "ten00001-usr000001-agt00002",
+            "hairem-openwebui",
+        ):
+            with self.subTest(retired=retired):
+                self.assertNotIn(retired, commands)
+
 
     def test_crd_vocabulary_is_not_runtime_selection(self):
         self.assertEqual(check([
