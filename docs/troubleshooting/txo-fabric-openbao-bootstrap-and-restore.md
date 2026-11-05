@@ -98,6 +98,8 @@ discards events**. Custody must document offsite retention, read-back,
 rotation and rollback without including any log values in evidence.
 No audit device, PVC, sidecar or external sink is installed here.
 
+**Recovery acceptance guide:** the source-controlled [OpenBao Fabric recovery acceptance contract](../guides/txo-fabric-openbao-fabric-recovery-acceptance.md) defines the custody, encrypted independent copy and isolated restore evidence required by #4049. It activates no runtime component.
+
 **Recovery dependency:** #4049 remains mandatory before storing real
 Fabric HMAC/Hermes/tenant credentials. No ESO Store or historic Infra
 ExternalSecret migration; no BFF/bridge gate change. TLS readiness alone
