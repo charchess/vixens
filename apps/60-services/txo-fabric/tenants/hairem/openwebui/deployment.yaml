@@ -28,7 +28,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: openwebui
-          image: ghcr.io/open-webui/open-webui@sha256:fab6ade6b58b92d8600a9bb90de8547b4ce5473087e69bb81fbf234e46b11b1d
+          image: ghcr.io/open-webui/open-webui@sha256:975e3965dcf5832804d2f77e167920794757027c5a2046917d42023d75fac431
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
