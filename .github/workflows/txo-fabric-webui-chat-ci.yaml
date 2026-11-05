@@ -5,12 +5,20 @@ on:
   pull_request:
     paths:
       - 'apps/60-services/txo-fabric/webui/**'
+      - 'apps/60-services/txo-fabric/tenants/**'
+      - 'apps/60-services/txo-fabric/overlays/prod/**'
+      - 'scripts/validation/check_fabric_private_api_render.py'
+      - 'scripts/validation/tests/test_fabric_private_api_render.py'
       - '.github/workflows/txo-fabric-webui-chat-ci.yaml'
   push:
     branches:
       - main
     paths:
       - 'apps/60-services/txo-fabric/webui/**'
+      - 'apps/60-services/txo-fabric/tenants/**'
+      - 'apps/60-services/txo-fabric/overlays/prod/**'
+      - 'scripts/validation/check_fabric_private_api_render.py'
+      - 'scripts/validation/tests/test_fabric_private_api_render.py'
       - '.github/workflows/txo-fabric-webui-chat-ci.yaml'
 
 permissions:
