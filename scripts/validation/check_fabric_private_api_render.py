@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Source-only production render gate for the one reviewed private Hermes canary.
+"""Generic, fail-closed source-only private Hermes API production render contract.
 
-The operator may create runtime resources from AgentIdentity intent. This guard
-does not attest live absence of credentials, listeners or Services.
+An eligible AgentIdentity may cause the operator to provision a private API.
+Only the operator can attest live Kubernetes ownership, credentials and access.
 """
 
 from __future__ import annotations
@@ -13,14 +13,11 @@ import re
 
 import yaml
 
-CANARY_NAME = "ten00001-usr000001-agt00002"
-CANARY_TENANT = "hairem"
-CANARY_TENANT_ID = "TEN00001"
-CANARY_AGENT_KEY = "usr000001-agt00002"
-CANARY_CREDENTIAL = "hermes-api-" + CANARY_AGENT_KEY
+TENANT_ID = re.compile(r"^TEN[0-9]{5,}$")
+DNS_NAME = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
 
-# Runtime resources selected directly through GitOps must remain free of an
-# unrelated/private API activation or the dormant chat persistence schema.
+# These forms must not be selected *directly* as GitOps runtime resources.
+# Operator-derived private API Services/credentials are not in a Kustomize render.
 FORBIDDEN_RUNTIME = re.compile(
     r"API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|privateAPI:"
     r"|(^|[^0-9])8642([^0-9]|$)"
@@ -33,80 +30,105 @@ FORBIDDEN_RESOURCE_NAMES = re.compile(
 )
 
 
+def valid_dns_name(value: object, max_length: int = 253) -> bool:
+    return isinstance(value, str) and 0 < len(value) <= max_length and bool(DNS_NAME.fullmatch(value))
+
+
 def check_rendered_private_api_contract(documents: list[object]) -> list[str]:
     violations: list[str] = []
-    found_canary = 0
+    tenant_ids: dict[str, str] = {}
+    seen_tenant_ids: set[str] = set()
+    agents: list[tuple[int, dict]] = []
     seen_agents: set[str] = set()
+    seen_agent_keys: set[tuple[str, str]] = set()
 
-    for index, document in enumerate(documents, start=1):
-        if document is None:
+    for index, doc in enumerate(documents, start=1):
+        if doc is None:
             continue
-        if not isinstance(document, dict):
-            violations.append(f"document {index}: expected a Kubernetes mapping")
+        if not isinstance(doc, dict):
+            violations.append(f"document {index}: expected Kubernetes mapping")
             continue
-        kind = document.get("kind")
+        kind = doc.get("kind")
         if kind == "CustomResourceDefinition":
-            # CRD API vocabulary is a schema, not a selected runtime resource.
+            # A CRD's declared vocabulary does not create runtime objects.
+            continue
+        if kind == "TenantBundle":
+            metadata, spec = doc.get("metadata"), doc.get("spec")
+            if not isinstance(metadata, dict) or not isinstance(spec, dict):
+                violations.append(f"document {index}: invalid TenantBundle")
+                continue
+            name, tenant_id = metadata.get("name"), spec.get("tenantId")
+            if not valid_dns_name(name) or not isinstance(tenant_id, str) or not TENANT_ID.fullmatch(tenant_id):
+                violations.append(f"document {index}: invalid TenantBundle canonical identity")
+                continue
+            if name in tenant_ids or tenant_id in seen_tenant_ids:
+                violations.append(f"document {index}: ambiguous TenantBundle identity")
+            tenant_ids[name] = tenant_id
+            seen_tenant_ids.add(tenant_id)
             continue
         if kind == "AgentIdentity":
-            name = (document.get("metadata") or {}).get("name")
-            if not isinstance(name, str) or not name:
-                violations.append(f"document {index}: AgentIdentity has no name")
-                continue
-            if name in seen_agents:
-                violations.append(f"AgentIdentity {name}: duplicate selected declaration")
-            seen_agents.add(name)
-            spec = document.get("spec") or {}
-            if not isinstance(spec, dict):
-                violations.append(f"AgentIdentity {name}: invalid spec")
-                continue
-            runtime = spec.get("runtime") or {}
-            if not isinstance(runtime, dict):
-                violations.append(f"AgentIdentity {name}: invalid runtime")
-                continue
-            api = runtime.get("privateAPI")
-            if api is None:
-                if name == CANARY_NAME:
-                    violations.append(f"AgentIdentity {name}: reviewed canary opt-in missing")
-                continue
-            if not isinstance(api, dict):
-                violations.append(f"AgentIdentity {name}: invalid privateAPI declaration")
-                continue
-            if set(api) - {"enabled", "tenantId", "credentialRef"}:
-                violations.append(f"AgentIdentity {name}: unsupported privateAPI fields")
-            enabled = api.get("enabled", False)
-            if not isinstance(enabled, bool):
-                violations.append(f"AgentIdentity {name}: privateAPI.enabled must be boolean")
-                continue
-            if not enabled:
-                if api.get("tenantId") or api.get("credentialRef"):
-                    violations.append(f"AgentIdentity {name}: disabled API has binding fields")
-                if name == CANARY_NAME:
-                    violations.append(f"AgentIdentity {name}: reviewed canary disabled")
-                continue
-            if name != CANARY_NAME:
-                violations.append(f"AgentIdentity {name}: unreviewed privateAPI opt-in")
-                continue
-            found_canary += 1
-            if (
-                (spec.get("tenantRef") or {}).get("name") != CANARY_TENANT
-                or spec.get("agentKey") != CANARY_AGENT_KEY
-                or api.get("tenantId") != CANARY_TENANT_ID
-                or api.get("credentialRef", "") not in ("", CANARY_CREDENTIAL)
-            ):
-                violations.append("reviewed Electra canary has noncanonical tenant, agent or credential binding")
+            agents.append((index, doc))
             continue
 
-        # The objects below are actually selected GitOps resources; the
-        # operator-derived resources from the canary are NOT in this render.
-        rendered = yaml.safe_dump(document, sort_keys=False)
+        # Selected workloads/Secrets/Services must not bypass the operator.
+        rendered = yaml.safe_dump(doc, sort_keys=False)
         if FORBIDDEN_RUNTIME.search(rendered):
             violations.append(f"document {index} ({kind}): forbidden directly selected API/chat runtime")
         if FORBIDDEN_RESOURCE_NAMES.search(rendered):
             violations.append(f"document {index} ({kind}): forbidden private API/credential resource")
 
-    if found_canary != 1:
-        violations.append(f"expected exactly one enabled reviewed Electra canary, got {found_canary}")
+    for index, agent in agents:
+        metadata, spec = agent.get("metadata"), agent.get("spec")
+        if not isinstance(metadata, dict) or not isinstance(spec, dict):
+            violations.append(f"document {index}: invalid AgentIdentity")
+            continue
+        name = metadata.get("name")
+        if not valid_dns_name(name):
+            violations.append(f"document {index}: invalid AgentIdentity name")
+            continue
+        if name in seen_agents:
+            violations.append(f"AgentIdentity {name}: duplicate selected declaration")
+        seen_agents.add(name)
+        tenant_ref = spec.get("tenantRef")
+        tenant_name = tenant_ref.get("name") if isinstance(tenant_ref, dict) else None
+        agent_key = spec.get("agentKey")
+        if not valid_dns_name(tenant_name) or tenant_name not in tenant_ids:
+            violations.append(f"AgentIdentity {name}: no canonical selected TenantBundle")
+        if not valid_dns_name(agent_key, 63):
+            violations.append(f"AgentIdentity {name}: invalid canonical agentKey")
+            continue
+        identity = (tenant_name, agent_key)
+        if identity in seen_agent_keys:
+            violations.append(f"AgentIdentity {name}: duplicate tenant-local agentKey")
+        seen_agent_keys.add(identity)
+        runtime = spec.get("runtime") or {}
+        if not isinstance(runtime, dict):
+            violations.append(f"AgentIdentity {name}: invalid runtime")
+            continue
+        api = runtime.get("privateAPI")
+        if api is None:
+            continue
+        if not isinstance(api, dict):
+            violations.append(f"AgentIdentity {name}: invalid privateAPI declaration")
+            continue
+        if set(api) - {"enabled", "tenantId", "credentialRef"}:
+            violations.append(f"AgentIdentity {name}: unsupported privateAPI fields")
+        enabled = api.get("enabled", False)
+        if not isinstance(enabled, bool):
+            violations.append(f"AgentIdentity {name}: privateAPI.enabled must be boolean")
+            continue
+        if not enabled:
+            if api.get("tenantId") or api.get("credentialRef"):
+                violations.append(f"AgentIdentity {name}: disabled API cannot have tenant/credential bindings")
+            continue
+        expected_id = tenant_ids.get(tenant_name)
+        declared_id = api.get("tenantId")
+        if expected_id is None or declared_id != expected_id:
+            violations.append(f"AgentIdentity {name}: privateAPI tenantId differs from canonical TenantBundle")
+        canonical_credential = "hermes-api-" + agent_key
+        credential_ref = api.get("credentialRef", "")
+        if (len(canonical_credential) > 63 or credential_ref not in ("", canonical_credential)):
+            violations.append(f"AgentIdentity {name}: noncanonical privateAPI credentialRef")
     return violations
 
 
@@ -120,7 +142,7 @@ def main() -> int:
         for violation in violations:
             print(f"::error::{violation}")
         return 1
-    print("PASS: BFF/chat runtime remains unselected; Electra is the only private API opt-in")
+    print("PASS: private API declarations follow tenant-agnostic contract; BFF/chat runtime unselected")
     return 0
 
 
