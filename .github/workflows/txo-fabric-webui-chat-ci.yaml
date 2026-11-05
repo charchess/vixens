@@ -32,22 +32,22 @@ jobs:
         run: node --test
       - name: Install pinned offline manifest parser
         run: python3 -m pip install --disable-pip-version-check pyyaml==6.0.2
-      - name: Test the bounded private API source guard
+      - name: Test generic multi-tenant private API source contract
         run: python3 -m unittest discover -s scripts/validation/tests -p test_fabric_private_api_render.py -v
       - name: Setup tools for source-only private API and WebUI checks
         uses: ./.github/actions/setup-k8s-tools
-      - name: Assert only reviewed Electra private API intent; BFF/chat remain inactive
+      - name: Assert canonical private API intent for any tenant; BFF/chat remain inactive
         shell: bash
         run: |
           set -euo pipefail
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-responses-prod.yaml
           # A selected AgentIdentity can cause the operator to create a real
-          # Secret, listener, Service and NetworkPolicy. Check the *exact* one
-          # reviewed canary; never hide all AgentIdentity declarations.
+          # Secret, listener, Service and NetworkPolicy. Validate all enabled
+          # agents against their canonical tenant without an identity allowlist.
           # Remaining selected workloads, Secrets, Services and chat schema
           # are checked independently for unintended API/DB activation.
           python3 scripts/validation/check_fabric_private_api_render.py /tmp/txo-responses-prod.yaml
           grep -A2 'name: TXO_WEBUI_BFF_BROWSER_ENABLED' apps/60-services/txo-fabric/webui/runtime/deployment.yaml | grep -q 'false'
           grep -A2 'name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED' apps/60-services/txo-fabric/operator/config/manager/manager.yaml | grep -q 'false'
           ! grep -q '003_fabric_chat_threads' apps/60-services/txo-fabric/webui/bootstrap/migrate-job.yaml
-          echo 'PASS: BFF gates OFF and only reviewed Hermes private API canary declared'
+          echo 'PASS: BFF gates OFF and all private API bindings tenant-canonical'
