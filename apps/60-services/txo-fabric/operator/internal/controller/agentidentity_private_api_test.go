@@ -450,24 +450,61 @@ func TestPrivateHermesAPIEndpointAttestationAcceptsCanonicalReadyRuntime(t *test
 	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, &deployment); err != nil {
 		t.Fatal(err)
 	}
+	deployment.UID = types.UID("f0f0f0f0-0000-4000-8000-000000000010")
+	if err := c.Update(ctx, &deployment); err != nil {
+		t.Fatal(err)
+	}
 	deployment.Status.ObservedGeneration = deployment.Generation
 	deployment.Status.UpdatedReplicas = 1
 	deployment.Status.AvailableReplicas = 1
 	if err := c.Status().Update(ctx, &deployment); err != nil {
 		t.Fatal(err)
 	}
+	var service corev1.Service
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, &service); err != nil {
+		t.Fatal(err)
+	}
+	service.UID = types.UID("f0f0f0f0-0000-4000-8000-000000000011")
+	if err := c.Update(ctx, &service); err != nil {
+		t.Fatal(err)
+	}
+	replicaSet := &appsv1.ReplicaSet{ObjectMeta: metav1.ObjectMeta{
+		Name:            name + "-unit",
+		Namespace:       namespace,
+		UID:             types.UID("f0f0f0f0-0000-4000-8000-000000000012"),
+		OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&deployment, appsv1.SchemeGroupVersion.WithKind("Deployment"))},
+	}}
+	replicaSet.Spec.Template = *deployment.Spec.Template.DeepCopy()
+	replicaSet.Spec.Template.Labels[appsv1.DefaultDeploymentUniqueLabelKey] = "unit"
 
 	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: name + "-unit", Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000099"), Labels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}},
-		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "hermes", Ports: []corev1.ContainerPort{{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP}}}}},
-		Status:     corev1.PodStatus{Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            name + "-unit",
+			Namespace:       namespace,
+			UID:             types.UID("f0f0f0f0-0000-4000-8000-000000000099"),
+			Labels:          map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey},
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(replicaSet, appsv1.SchemeGroupVersion.WithKind("ReplicaSet"))},
+		},
+		Spec:   corev1.PodSpec{Containers: []corev1.Container{{Name: "hermes", Ports: []corev1.ContainerPort{{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP}}}}},
+		Status: corev1.PodStatus{Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}},
 	}
 	port := int32(privateHermesAPIPort)
 	slice := &discoveryv1.EndpointSlice{
-		ObjectMeta:  metav1.ObjectMeta{Name: name + "-unit", Namespace: namespace, Labels: map[string]string{discoveryv1.LabelServiceName: name}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name + "-unit",
+			Namespace: namespace,
+			Labels: map[string]string{
+				discoveryv1.LabelServiceName: name,
+				discoveryv1.LabelManagedBy:   "endpointslice-controller.k8s.io",
+			},
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&service, corev1.SchemeGroupVersion.WithKind("Service"))},
+		},
 		AddressType: discoveryv1.AddressTypeIPv4,
 		Ports:       []discoveryv1.EndpointPort{{Name: stringPtr("responses"), Protocol: protocolPtr(corev1.ProtocolTCP), Port: &port}},
 		Endpoints:   []discoveryv1.Endpoint{{Addresses: []string{"10.42.0.99"}, Conditions: discoveryv1.EndpointConditions{Ready: boolPtr(true)}, TargetRef: &corev1.ObjectReference{Kind: "Pod", Namespace: namespace, Name: pod.Name, UID: pod.UID}}},
+	}
+	if err := c.Create(ctx, replicaSet); err != nil {
+		t.Fatal(err)
 	}
 	if err := c.Create(ctx, pod); err != nil {
 		t.Fatal(err)
@@ -493,5 +530,70 @@ func TestPrivateHermesAPIEndpointConditionRequiresAttestation(t *testing.T) {
 	condition = apiMeta.FindStatusCondition(agent.Status.Conditions, privateHermesAPICondition)
 	if condition == nil || condition.Status != metav1.ConditionTrue || condition.Reason != "EndpointAttested" {
 		t.Fatalf("attested condition=%#v", condition)
+	}
+}
+
+func TestPrivateHermesAPIEndpointAttestationRejectsForeignReplicaSetPod(t *testing.T) {
+	ctx := context.Background()
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	namespace := tenantNamespace(tenant.Name)
+	name := runtimeName(agent.Spec.AgentKey)
+	replicas := int32(1)
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000020"), Generation: 1, OwnerReferences: []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(), Kind: "AgentIdentity", Name: agent.Name, UID: agent.UID, Controller: boolPtr(true)}}}, Spec: appsv1.DeploymentSpec{Replicas: &replicas}, Status: appsv1.DeploymentStatus{ObservedGeneration: 1, UpdatedReplicas: 1, AvailableReplicas: 1}}
+	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000021"), OwnerReferences: []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(), Kind: "AgentIdentity", Name: agent.Name, UID: agent.UID, Controller: boolPtr(true)}}}, Spec: corev1.ServiceSpec{Type: corev1.ServiceTypeClusterIP, Selector: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}, Ports: []corev1.ServicePort{{Name: "responses", Protocol: corev1.ProtocolTCP, Port: privateHermesAPIPort, TargetPort: *intOrStringPtr(privateHermesAPIPort)}}}}
+	foreignDeployment := deployment.DeepCopy()
+	foreignDeployment.UID = types.UID("f0f0f0f0-0000-4000-8000-000000000022")
+	foreignReplicaSet := &appsv1.ReplicaSet{ObjectMeta: metav1.ObjectMeta{Name: name + "-stale", Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000023"), OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(foreignDeployment, appsv1.SchemeGroupVersion.WithKind("Deployment"))}}}
+	foreignReplicaSet.Spec.Template.Labels = map[string]string{"revision": "stale"}
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: name + "-stale", Namespace: namespace, UID: types.UID("f0f0f0f0-0000-4000-8000-000000000024"), Labels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}, OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(foreignReplicaSet, appsv1.SchemeGroupVersion.WithKind("ReplicaSet"))}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "hermes", Ports: []corev1.ContainerPort{{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP}}}}}, Status: corev1.PodStatus{Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}}}
+	port := int32(privateHermesAPIPort)
+	slice := &discoveryv1.EndpointSlice{ObjectMeta: metav1.ObjectMeta{Name: name + "-stale", Namespace: namespace, Labels: map[string]string{discoveryv1.LabelServiceName: name, discoveryv1.LabelManagedBy: "endpointslice-controller.k8s.io"}, OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(service, corev1.SchemeGroupVersion.WithKind("Service"))}}, AddressType: discoveryv1.AddressTypeIPv4, Ports: []discoveryv1.EndpointPort{{Name: stringPtr("responses"), Protocol: protocolPtr(corev1.ProtocolTCP), Port: &port}}, Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.42.0.20"}, Conditions: discoveryv1.EndpointConditions{Ready: boolPtr(true)}, TargetRef: &corev1.ObjectReference{Kind: "Pod", Namespace: namespace, Name: pod.Name, UID: pod.UID}}}}
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent, deployment, service, foreignReplicaSet, pod, slice).Build()
+	ready, err := privateHermesAPIEndpointAttested(ctx, c, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready {
+		t.Fatal("foreign or stale correctly labeled Pod and EndpointSlice must not attest")
+	}
+	foreignReplicaSet.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(deployment, appsv1.SchemeGroupVersion.WithKind("Deployment"))}
+	if err := c.Update(ctx, foreignReplicaSet); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = privateHermesAPIEndpointAttested(ctx, c, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready {
+		t.Fatal("stale ReplicaSet Pod must not attest after the Deployment has rolled forward")
+	}
+	foreignReplicaSet.Spec.Template = *deployment.Spec.Template.DeepCopy()
+	foreignReplicaSet.Spec.Template.Labels = map[string]string{appsv1.DefaultDeploymentUniqueLabelKey: "current"}
+	if err := c.Update(ctx, foreignReplicaSet); err != nil {
+		t.Fatal(err)
+	}
+	slice.Labels[discoveryv1.LabelManagedBy] = "foreign-endpoint-controller"
+	if err := c.Update(ctx, slice); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = privateHermesAPIEndpointAttested(ctx, c, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready {
+		t.Fatal("foreign or unmanaged Service-labeled EndpointSlice must not attest")
+	}
+	slice.Labels[discoveryv1.LabelManagedBy] = "endpointslice-controller.k8s.io"
+	slice.OwnerReferences = nil
+	if err := c.Update(ctx, slice); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = privateHermesAPIEndpointAttested(ctx, c, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready {
+		t.Fatal("unowned Service-labeled EndpointSlice must not attest")
 	}
 }
