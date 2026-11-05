@@ -9,7 +9,9 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/authentik"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/privatebridge"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func markBrowserTenantReady(t *testing.T, r *TenantBundleReconciler, b *fabricv1alpha1.TenantBundle, now time.Time) {
@@ -86,6 +88,33 @@ func TestBrowserTenantCatalogReturnsOnlyCurrentAuthorizedTenants(t *testing.T) {
 	}
 	if len(unavailable.Tenants) != 0 {
 		t.Fatalf("IAM outage exposed a tenant: %#v", unavailable.Tenants)
+	}
+}
+
+func TestResponsesAuthorityAgentRequiresAttestedCanonicalPrivateRuntime(t *testing.T) {
+	ctx := context.Background()
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	agent.Status.Phase = "Ready"
+	agent.Status.ObservedGeneration = agent.Generation
+	agent.Status.Conditions = []metav1.Condition{{
+		Type: privateHermesAPICondition, Status: metav1.ConditionTrue,
+		Reason: "EndpointAttested", ObservedGeneration: agent.Generation,
+	}}
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &TenantBundleReconciler{Client: c}
+
+	resolved, err := r.responsesAuthorityAgent(ctx, tenant, agent.Spec.AgentKey)
+	if err != nil || resolved == nil || resolved.UID != agent.UID || resolved.Generation != agent.Generation {
+		t.Fatalf("attested canonical private agent not resolved: agent=%#v err=%v", resolved, err)
+	}
+
+	resolved.Status.Conditions[0].Reason = "NotReady"
+	if err := c.Update(ctx, resolved); err != nil {
+		t.Fatal(err)
+	}
+	if resolved, err := r.responsesAuthorityAgent(ctx, tenant, agent.Spec.AgentKey); err == nil || resolved != nil {
+		t.Fatalf("unattested private API must not resolve: agent=%#v err=%v", resolved, err)
 	}
 }
 
