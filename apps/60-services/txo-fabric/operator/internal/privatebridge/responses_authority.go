@@ -69,8 +69,31 @@ type ResponsesTenantAuthority struct {
 	Status          string `json:"status"`
 }
 
+// ResponsesAgentAuthority contains only immutable lifecycle facts that a BFF
+// needs to derive a private service target itself. It never carries an
+// endpoint address, API key, OpenFGA store/model, or Kubernetes credential.
+type ResponsesAgentAuthority struct {
+	TenantKey        string `json:"tenantKey"`
+	FabricTenantID   string `json:"fabricTenantId"`
+	AgentKey         string `json:"agentKey"`
+	AgentIdentityUID string `json:"agentIdentityUID"`
+	AgentGeneration  int64  `json:"agentGeneration"`
+	Status           string `json:"status"`
+}
+
+type ResponsesAuthorizationAuthority struct {
+	Allowed bool `json:"allowed"`
+}
+
+type ResponsesRuntimeAuthority struct {
+	Attested bool `json:"attested"`
+}
+
 type ResponsesAuthorityResponse struct {
-	Tenant *ResponsesTenantAuthority `json:"tenant,omitempty"`
+	Tenant        *ResponsesTenantAuthority        `json:"tenant,omitempty"`
+	Agent         *ResponsesAgentAuthority         `json:"agent,omitempty"`
+	Authorization *ResponsesAuthorizationAuthority `json:"authorization,omitempty"`
+	Runtime       *ResponsesRuntimeAuthority       `json:"runtime,omitempty"`
 }
 
 // ResponsesAuthorityResolver owns all canonical Fabric/Kubernetes reads. The
@@ -165,7 +188,25 @@ func validResponsesAuthorityAssertion(a ResponsesAuthorityAssertion, q Responses
 }
 
 func validResponsesAuthorityResponse(q ResponsesAuthorityRequest, out ResponsesAuthorityResponse) bool {
-	return out.Tenant != nil && out.Tenant.TenantKey == q.TenantKey && out.Tenant.FabricTenantID == q.FabricTenantID && uuidPattern.MatchString(out.Tenant.TenantBundleUID) && out.Tenant.Status == "Ready"
+	switch q.Operation {
+	case ResponsesAuthorityResolveTenant:
+		return out.Tenant != nil && out.Agent == nil && out.Authorization == nil && out.Runtime == nil &&
+			out.Tenant.TenantKey == q.TenantKey && out.Tenant.FabricTenantID == q.FabricTenantID &&
+			uuidPattern.MatchString(out.Tenant.TenantBundleUID) && out.Tenant.Status == "Ready"
+	case ResponsesAuthorityResolveAgent:
+		return out.Tenant == nil && out.Agent != nil && out.Authorization == nil && out.Runtime == nil &&
+			out.Agent.TenantKey == q.TenantKey && out.Agent.FabricTenantID == q.FabricTenantID &&
+			out.Agent.AgentKey == q.AgentKey && uuidPattern.MatchString(out.Agent.AgentIdentityUID) &&
+			out.Agent.AgentGeneration > 0 && out.Agent.Status == "Ready"
+	case ResponsesAuthorityAuthorizeChat:
+		return out.Tenant == nil && out.Agent == nil && out.Authorization != nil && out.Runtime == nil &&
+			out.Authorization.Allowed
+	case ResponsesAuthorityVerifyRuntime:
+		return out.Tenant == nil && out.Agent == nil && out.Authorization == nil && out.Runtime != nil &&
+			out.Runtime.Attested
+	default:
+		return false
+	}
 }
 
 func (h *ResponsesAuthorityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

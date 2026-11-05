@@ -90,3 +90,30 @@ func TestResponsesAuthorityRejectsCrossOperationAndSnapshotConfusion(t *testing.
 		t.Fatal("agent assertion replay accepted for another agent")
 	}
 }
+
+func TestResponsesAuthorityResponseIsOperationScoped(t *testing.T) {
+	tenant := &ResponsesTenantAuthority{TenantKey: "hairem", FabricTenantID: "TEN00001", TenantBundleUID: "6d0a9f4e-8024-4d39-97a5-cc1560f98dc7", Status: "Ready"}
+	agent := &ResponsesAgentAuthority{TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", AgentIdentityUID: "9d0a9f4e-8024-4d39-97a5-cc1560f98dc7", AgentGeneration: 7, Status: "Ready"}
+	cases := []struct {
+		name string
+		q    ResponsesAuthorityRequest
+		out  ResponsesAuthorityResponse
+		want bool
+	}{
+		{"tenant", ResponsesAuthorityRequest{Operation: ResponsesAuthorityResolveTenant, TenantKey: "hairem", FabricTenantID: "TEN00001"}, ResponsesAuthorityResponse{Tenant: tenant}, true},
+		{"agent", ResponsesAuthorityRequest{Operation: ResponsesAuthorityResolveAgent, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra"}, ResponsesAuthorityResponse{Agent: agent}, true},
+		{"authorization", ResponsesAuthorityRequest{Operation: ResponsesAuthorityAuthorizeChat, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", FabricUserID: "usr0123456789abcdef0123456789abcdef"}, ResponsesAuthorityResponse{Authorization: &ResponsesAuthorizationAuthority{Allowed: true}}, true},
+		{"runtime", ResponsesAuthorityRequest{Operation: ResponsesAuthorityVerifyRuntime, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", TenantBundleUID: tenant.TenantBundleUID, TenantGeneration: 3, AgentIdentityUID: agent.AgentIdentityUID, AgentGeneration: 7}, ResponsesAuthorityResponse{Runtime: &ResponsesRuntimeAuthority{Attested: true}}, true},
+		{"cross-operation tenant", ResponsesAuthorityRequest{Operation: ResponsesAuthorityResolveAgent, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra"}, ResponsesAuthorityResponse{Tenant: tenant}, false},
+		{"mixed authority", ResponsesAuthorityRequest{Operation: ResponsesAuthorityResolveTenant, TenantKey: "hairem", FabricTenantID: "TEN00001"}, ResponsesAuthorityResponse{Tenant: tenant, Agent: agent}, false},
+		{"authorization denied", ResponsesAuthorityRequest{Operation: ResponsesAuthorityAuthorizeChat, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", FabricUserID: "usr0123456789abcdef0123456789abcdef"}, ResponsesAuthorityResponse{Authorization: &ResponsesAuthorizationAuthority{}}, false},
+		{"runtime unverified", ResponsesAuthorityRequest{Operation: ResponsesAuthorityVerifyRuntime, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", TenantBundleUID: tenant.TenantBundleUID, TenantGeneration: 3, AgentIdentityUID: agent.AgentIdentityUID, AgentGeneration: 7}, ResponsesAuthorityResponse{Runtime: &ResponsesRuntimeAuthority{}}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := validResponsesAuthorityResponse(tc.q, tc.out); got != tc.want {
+				t.Fatalf("validResponsesAuthorityResponse()=%t want %t for %#v", got, tc.want, tc.out)
+			}
+		})
+	}
+}
