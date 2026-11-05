@@ -62,3 +62,31 @@ func TestResponsesAuthorityAcceptsOnlySignedServerScope(t *testing.T) {
 		t.Fatalf("client injection reached response authority: code=%d calls=%d", w.Code, calls)
 	}
 }
+
+func TestResponsesAuthorityRejectsCrossOperationAndSnapshotConfusion(t *testing.T) {
+	base := ResponsesAuthorityRequest{Operation: ResponsesAuthorityResolveAgent, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra"}
+	if !validResponsesAuthorityRequest(base) {
+		t.Fatal("valid agent-resolution request rejected")
+	}
+	cases := []ResponsesAuthorityRequest{
+		{Operation: ResponsesAuthorityResolveTenant, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra"},
+		{Operation: ResponsesAuthorityResolveAgent, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", FabricUserID: "usr0123456789abcdef0123456789abcdef"},
+		{Operation: ResponsesAuthorityAuthorizeChat, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra"},
+		{Operation: ResponsesAuthorityVerifyRuntime, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", TenantBundleUID: "6d0a9f4e-8024-4d39-97a5-cc1560f98dc7", TenantGeneration: 3, AgentIdentityUID: "9d0a9f4e-8024-4d39-97a5-cc1560f98dc7"},
+	}
+	for _, q := range cases {
+		if validResponsesAuthorityRequest(q) {
+			t.Fatalf("invalid responses authority request accepted: %#v", q)
+		}
+	}
+
+	q := ResponsesAuthorityRequest{Operation: ResponsesAuthorityAuthorizeChat, TenantKey: "hairem", FabricTenantID: "TEN00001", AgentKey: "electra", FabricUserID: "usr0123456789abcdef0123456789abcdef"}
+	a := ResponsesAuthorityAssertion{Operation: q.Operation, TenantKey: q.TenantKey, FabricTenantID: q.FabricTenantID, AgentKey: q.AgentKey, FabricUserID: q.FabricUserID}
+	if !sameResponsesAuthorityScope(a, q) {
+		t.Fatal("matching authority scope rejected")
+	}
+	a.AgentKey = "other-agent"
+	if sameResponsesAuthorityScope(a, q) {
+		t.Fatal("agent assertion replay accepted for another agent")
+	}
+}

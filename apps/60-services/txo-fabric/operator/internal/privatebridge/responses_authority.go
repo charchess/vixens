@@ -18,27 +18,48 @@ import (
 // stateless Hermes Responses adapter, never browser presentation data.
 const ResponsesAuthorityPath = "/internal/v1/responses-authority/resolve"
 
-const ResponsesAuthorityResolveTenant = "resolve-tenant"
+const (
+	ResponsesAuthorityResolveTenant = "resolve-tenant"
+	ResponsesAuthorityResolveAgent  = "resolve-agent"
+	ResponsesAuthorityAuthorizeChat = "authorize-chat"
+	ResponsesAuthorityVerifyRuntime = "verify-runtime"
+)
 
-var fabricTenantIDPattern = regexp.MustCompile(`^TEN[0-9]{5,}$`)
+var (
+	fabricTenantIDPattern    = regexp.MustCompile(`^TEN[0-9]{5,}$`)
+	fabricUserIDPattern      = regexp.MustCompile(`^usr[0-9a-f]{32}$`)
+	responsesAgentKeyPattern = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]{0,54}[a-z0-9])?$`)
+)
 
 type ResponsesAuthorityRequest struct {
-	Operation      string `json:"operation"`
-	TenantKey      string `json:"tenantKey"`
-	FabricTenantID string `json:"fabricTenantId"`
+	Operation        string `json:"operation"`
+	TenantKey        string `json:"tenantKey"`
+	FabricTenantID   string `json:"fabricTenantId"`
+	AgentKey         string `json:"agentKey,omitempty"`
+	FabricUserID     string `json:"fabricUserId,omitempty"`
+	TenantBundleUID  string `json:"tenantBundleUID,omitempty"`
+	TenantGeneration int64  `json:"tenantGeneration,omitempty"`
+	AgentIdentityUID string `json:"agentIdentityUID,omitempty"`
+	AgentGeneration  int64  `json:"agentGeneration,omitempty"`
 }
 
 type ResponsesAuthorityAssertion struct {
-	Method         string `json:"method"`
-	Path           string `json:"path"`
-	Operation      string `json:"operation"`
-	TenantKey      string `json:"tenantKey"`
-	FabricTenantID string `json:"fabricTenantId"`
-	ServiceAccount string `json:"serviceAccount"`
-	Audience       string `json:"audience"`
-	IssuedAt       int64  `json:"iat"`
-	ExpiresAt      int64  `json:"exp"`
-	JTI            string `json:"jti"`
+	Method           string `json:"method"`
+	Path             string `json:"path"`
+	Operation        string `json:"operation"`
+	TenantKey        string `json:"tenantKey"`
+	FabricTenantID   string `json:"fabricTenantId"`
+	AgentKey         string `json:"agentKey,omitempty"`
+	FabricUserID     string `json:"fabricUserId,omitempty"`
+	TenantBundleUID  string `json:"tenantBundleUID,omitempty"`
+	TenantGeneration int64  `json:"tenantGeneration,omitempty"`
+	AgentIdentityUID string `json:"agentIdentityUID,omitempty"`
+	AgentGeneration  int64  `json:"agentGeneration,omitempty"`
+	ServiceAccount   string `json:"serviceAccount"`
+	Audience         string `json:"audience"`
+	IssuedAt         int64  `json:"iat"`
+	ExpiresAt        int64  `json:"exp"`
+	JTI              string `json:"jti"`
 }
 
 type ResponsesTenantAuthority struct {
@@ -110,11 +131,33 @@ func verifyResponsesAuthorityAssertion(key []byte, raw string) (ResponsesAuthori
 }
 
 func validResponsesAuthorityRequest(q ResponsesAuthorityRequest) bool {
-	return q.Operation == ResponsesAuthorityResolveTenant && tenantKeyPattern.MatchString(q.TenantKey) && fabricTenantIDPattern.MatchString(q.FabricTenantID)
+	base := tenantKeyPattern.MatchString(q.TenantKey) && fabricTenantIDPattern.MatchString(q.FabricTenantID)
+	if !base {
+		return false
+	}
+	switch q.Operation {
+	case ResponsesAuthorityResolveTenant:
+		return q.AgentKey == "" && q.FabricUserID == "" && q.TenantBundleUID == "" && q.TenantGeneration == 0 && q.AgentIdentityUID == "" && q.AgentGeneration == 0
+	case ResponsesAuthorityResolveAgent:
+		return responsesAgentKeyPattern.MatchString(q.AgentKey) && q.FabricUserID == "" && q.TenantBundleUID == "" && q.TenantGeneration == 0 && q.AgentIdentityUID == "" && q.AgentGeneration == 0
+	case ResponsesAuthorityAuthorizeChat:
+		return responsesAgentKeyPattern.MatchString(q.AgentKey) && fabricUserIDPattern.MatchString(q.FabricUserID) && q.TenantBundleUID == "" && q.TenantGeneration == 0 && q.AgentIdentityUID == "" && q.AgentGeneration == 0
+	case ResponsesAuthorityVerifyRuntime:
+		return responsesAgentKeyPattern.MatchString(q.AgentKey) && q.FabricUserID == "" && uuidPattern.MatchString(q.TenantBundleUID) && q.TenantGeneration > 0 && uuidPattern.MatchString(q.AgentIdentityUID) && q.AgentGeneration > 0
+	default:
+		return false
+	}
+}
+
+func sameResponsesAuthorityScope(a ResponsesAuthorityAssertion, q ResponsesAuthorityRequest) bool {
+	return a.Operation == q.Operation && a.TenantKey == q.TenantKey && a.FabricTenantID == q.FabricTenantID &&
+		a.AgentKey == q.AgentKey && a.FabricUserID == q.FabricUserID &&
+		a.TenantBundleUID == q.TenantBundleUID && a.TenantGeneration == q.TenantGeneration &&
+		a.AgentIdentityUID == q.AgentIdentityUID && a.AgentGeneration == q.AgentGeneration
 }
 
 func validResponsesAuthorityAssertion(a ResponsesAuthorityAssertion, q ResponsesAuthorityRequest, c Contract, now time.Time) bool {
-	if a.Method != http.MethodPost || a.Path != ResponsesAuthorityPath || a.Operation != q.Operation || a.TenantKey != q.TenantKey || a.FabricTenantID != q.FabricTenantID || a.ServiceAccount != c.BFFServiceAccount || a.Audience != c.Audience || !validResponsesAuthorityRequest(q) || !jtiPattern.MatchString(a.JTI) {
+	if a.Method != http.MethodPost || a.Path != ResponsesAuthorityPath || !sameResponsesAuthorityScope(a, q) || a.ServiceAccount != c.BFFServiceAccount || a.Audience != c.Audience || !validResponsesAuthorityRequest(q) || !jtiPattern.MatchString(a.JTI) {
 		return false
 	}
 	issued, expires := time.Unix(a.IssuedAt, 0), time.Unix(a.ExpiresAt, 0)

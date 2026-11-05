@@ -356,6 +356,20 @@ func (r *AgentIdentityReconciler) privateHermesAPICredentialExists(ctx context.C
 // routes to exactly one current Hermes Pod. Missing, stale, foreign, or
 // ambiguous objects are deliberately non-ready; API errors remain visible.
 func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) (bool, error) {
+	reader := client.Reader(r.Client)
+	if r.APIReader != nil {
+		reader = r.APIReader
+	}
+	return privateHermesAPIEndpointAttested(ctx, reader, agent, tenant, namespace)
+}
+
+// privateHermesAPIEndpointAttested is shared by reconciliation and the private
+// Responses authority. It accepts only an operator-owned reader and derives all
+// resource names from canonical TenantBundle/AgentIdentity objects.
+func privateHermesAPIEndpointAttested(ctx context.Context, reader client.Reader, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) (bool, error) {
+	if reader == nil {
+		return false, fmt.Errorf("private Hermes API endpoint attestation requires a reader")
+	}
 	if reason, _ := privateHermesAPIIntent(agent, tenant); reason != "NotReady" {
 		return false, nil
 	}
@@ -363,7 +377,7 @@ func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.C
 	selector := map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}
 
 	service := &corev1.Service{}
-	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, service); err != nil {
+	if err := reader.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, service); err != nil {
 		if apierrors.IsNotFound(err) {
 			return false, nil
 		}
@@ -375,7 +389,7 @@ func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.C
 	}
 
 	deployment := &appsv1.Deployment{}
-	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment); err != nil {
+	if err := reader.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deployment); err != nil {
 		if apierrors.IsNotFound(err) {
 			return false, nil
 		}
@@ -391,7 +405,7 @@ func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.C
 	}
 
 	var slices discoveryv1.EndpointSliceList
-	if err := r.List(ctx, &slices, client.InNamespace(namespace), client.MatchingLabels{discoveryv1.LabelServiceName: name}); err != nil {
+	if err := reader.List(ctx, &slices, client.InNamespace(namespace), client.MatchingLabels{discoveryv1.LabelServiceName: name}); err != nil {
 		return false, err
 	}
 	var targetUID types.UID
@@ -423,7 +437,7 @@ func (r *AgentIdentityReconciler) privateHermesAPIEndpointAttested(ctx context.C
 	}
 
 	var pods corev1.PodList
-	if err := r.List(ctx, &pods, client.InNamespace(namespace), client.MatchingLabels(selector)); err != nil {
+	if err := reader.List(ctx, &pods, client.InNamespace(namespace), client.MatchingLabels(selector)); err != nil {
 		return false, err
 	}
 	if len(pods.Items) != 1 {
