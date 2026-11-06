@@ -84,10 +84,8 @@ resources:
   # Disabled by owner: apps/mongodb-shared.yaml
   # Disabled by owner: apps/penpot.yaml
   # Disabled by owner: apps/vikunja.yaml
-  - apps/trivy.yaml
   - apps/radar.yaml
   - apps/trilium.yaml
-  - apps/maturity-controller.yaml
   # Disabled by owner: apps/bookshelf.yaml
 
 patches:
