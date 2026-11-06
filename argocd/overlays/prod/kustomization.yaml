@@ -11,9 +11,7 @@ resources:
   - apps/traefik-middlewares.yaml
   - apps/metrics-server.yaml
   - apps/vpa.yaml
-  - apps/prometheus-operator-crds.yaml
   - apps/kyverno.yaml
-  - apps/descheduler.yaml
   # Disabled by owner: apps/nexterm.yaml
   - apps/argocd.yaml
   - apps/txo-fabric.yaml
@@ -75,7 +73,6 @@ resources:
   # Disabled by owner: apps/netbox.yaml
   - apps/loki.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
-  - apps/renovate.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
   # Disabled by owner: apps/it-tools.yaml
   - apps/external-dns-gandi.yaml
