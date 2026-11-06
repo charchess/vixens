@@ -19,3 +19,9 @@ vtherm_api>=0.7.0
 
 # TrueNAS SCALE integration 2.13.0 requires aiotruenas>=1.7.0.
 aiotruenas>=1.7.0
+
+# HA-MCP custom component 9.1.0: Home Assistant Core already supplies
+# mcp==2.3.0, so only its absent runtime dependencies are installed here.
+ruamel.yaml>=0.18.0
+voluptuous-openapi>=0.4.1
+ha-mcp==9.1.0
