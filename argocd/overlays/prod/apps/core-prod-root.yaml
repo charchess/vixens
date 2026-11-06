@@ -1,0 +1,26 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: core-prod-root
+  namespace: argocd
+  labels:
+    vixens.io/component: domain-root
+    vixens.io/domain: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "9"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens-core.git
+    targetRevision: a98bf3cbceaf88b6aaa5c6bfc718520df81dfd05
+    path: argocd/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
