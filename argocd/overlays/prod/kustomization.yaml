@@ -20,7 +20,6 @@ resources:
   - apps/descheduler.yaml
   - apps/headlamp.yaml
   # Disabled by owner: apps/nexterm.yaml
-  - apps/traefik-dashboard.yaml
   - apps/argocd.yaml
   - apps/txo-fabric.yaml
   - apps/cert-manager.yaml
