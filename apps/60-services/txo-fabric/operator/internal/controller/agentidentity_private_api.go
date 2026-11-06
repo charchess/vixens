@@ -239,10 +239,10 @@ func privateHermesAPIRandomToken(bytes int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(value), nil
 }
 
-// ensurePrivateHermesAPIRuntime is the only place that can add the private
-// API Server env/port. A SecretKeyRef is applied only after metadata-only
-// provenance validation by ensurePrivateHermesAPICredential; secret bytes are
-// neither fetched nor copied into the Deployment.
+// configurePrivateHermesAPIRuntime is shared by the canonical Deployment
+// renderer and the withdrawal helper. Its SecretKeyRef is applied only after
+// metadata-only provenance validation by ensurePrivateHermesAPICredential;
+// secret bytes are neither fetched nor copied into the Deployment.
 func (r *AgentIdentityReconciler) ensurePrivateHermesAPIRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string, credentialReady bool) error {
 	deployment := &appsv1.Deployment{}
 	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: runtimeName(agent.Spec.AgentKey)}, deployment); err != nil {
@@ -253,21 +253,27 @@ func (r *AgentIdentityReconciler) ensurePrivateHermesAPIRuntime(ctx context.Cont
 	}
 	before := deployment.DeepCopy()
 	container := &deployment.Spec.Template.Spec.Containers[0]
-	container.Env = removePrivateHermesAPIEnv(container.Env)
-	container.Ports = removePrivateHermesAPIPort(container.Ports)
-	if credentialReady {
-		container.Ports = append(container.Ports, corev1.ContainerPort{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP})
-		container.Env = append(container.Env,
-			corev1.EnvVar{Name: "API_SERVER_ENABLED", Value: "true"},
-			corev1.EnvVar{Name: "API_SERVER_HOST", Value: "0.0.0.0"},
-			corev1.EnvVar{Name: "API_SERVER_PORT", Value: strconv.Itoa(privateHermesAPIPort)},
-			corev1.EnvVar{Name: "API_SERVER_KEY", ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: privateHermesAPICredentialPrefix + agent.Spec.AgentKey}, Key: "api-key"}}},
-		)
+	configurePrivateHermesAPIRuntime(container, agent)
+	if !credentialReady {
+		container.Env = removePrivateHermesAPIEnv(container.Env)
+		container.Ports = removePrivateHermesAPIPort(container.Ports)
 	}
 	if reflect.DeepEqual(before.Spec.Template, deployment.Spec.Template) {
 		return nil
 	}
 	return r.Update(ctx, deployment)
+}
+
+func configurePrivateHermesAPIRuntime(container *corev1.Container, agent *fabricv1alpha1.AgentIdentity) {
+	container.Env = removePrivateHermesAPIEnv(container.Env)
+	container.Ports = removePrivateHermesAPIPort(container.Ports)
+	container.Ports = append(container.Ports, corev1.ContainerPort{Name: "responses", ContainerPort: privateHermesAPIPort, Protocol: corev1.ProtocolTCP})
+	container.Env = append(container.Env,
+		corev1.EnvVar{Name: "API_SERVER_ENABLED", Value: "true"},
+		corev1.EnvVar{Name: "API_SERVER_HOST", Value: "0.0.0.0"},
+		corev1.EnvVar{Name: "API_SERVER_PORT", Value: strconv.Itoa(privateHermesAPIPort)},
+		corev1.EnvVar{Name: "API_SERVER_KEY", ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: privateHermesAPICredentialPrefix + agent.Spec.AgentKey}, Key: "api-key"}}},
+	)
 }
 
 func removePrivateHermesAPIEnv(values []corev1.EnvVar) []corev1.EnvVar {

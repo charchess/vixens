@@ -208,20 +208,24 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 			return err
 		}
 	}
-	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationResolution{})
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationResolution{}, false)
 }
 
 func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
-	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, functional...)
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, false, functional...)
 }
 
-func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+func (r *AgentIdentityReconciler) ensureDeploymentWithPrivateAPI(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, privateAPICredentialReady bool, functional ...effectiveFunctionalProfile) error {
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, privateAPICredentialReady, functional...)
+}
+
+func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, privateAPICredentialReady bool, functional ...effectiveFunctionalProfile) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		return r.ensureDeploymentRuntimeOnce(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, functional...)
+		return r.ensureDeploymentRuntimeOnce(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, privateAPICredentialReady, functional...)
 	})
 }
 
-func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, privateAPICredentialReady bool, functional ...effectiveFunctionalProfile) error {
 	if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
 		return fmt.Errorf("runtime.storage.adoptLegacyProfile is retired; refusing to remount an existing named profile on a different home")
 	}
@@ -394,6 +398,9 @@ fi
 				corev1.EnvVar{Name: "HERMES_DASHBOARD_OIDC_SCOPES", Value: humanAccess.OIDCScopes},
 				corev1.EnvVar{Name: "HERMES_DASHBOARD_FILES_ROOT", Value: humanAccess.FilesRoot},
 			)
+		}
+		if privateAPICredentialReady {
+			configurePrivateHermesAPIRuntime(&deployment.Spec.Template.Spec.Containers[0], agent)
 		}
 		if err := configureHermesHindsight(agent, tenant, profile, deployment); err != nil {
 			return err

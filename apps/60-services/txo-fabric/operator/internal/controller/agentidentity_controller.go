@@ -250,12 +250,8 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// read back by this reconciler.
 	privateAPICredentialReady, privateAPICredentialErr := r.ensurePrivateHermesAPICredential(ctx, &agent, &tenant, namespace)
 
-	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
+	if err := r.ensureDeploymentWithPrivateAPI(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, privateAPICredentialReady, functional); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
-		return ctrl.Result{}, err
-	}
-	if err := r.ensurePrivateHermesAPIRuntime(ctx, &agent, &tenant, namespace, privateAPICredentialReady); err != nil {
-		r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPIRuntimeReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
 	if privateAPICredentialErr != nil {
