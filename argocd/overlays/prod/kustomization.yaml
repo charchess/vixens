@@ -22,7 +22,6 @@ resources:
   - apps/argocd.yaml
   - apps/txo-fabric.yaml
   - apps/cert-manager.yaml
-  - apps/cert-manager-webhook-gandi.yaml
   - apps/cert-manager-config.yaml
   - apps/snapshot-controller.yaml
   # UMI development overlays must never be deployed to production.
