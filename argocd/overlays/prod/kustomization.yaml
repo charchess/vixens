@@ -24,7 +24,6 @@ resources:
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml
   - apps/txo-fabric.yaml
-  - apps/whoami.yaml
   - apps/cert-manager.yaml
   - apps/cert-manager-secrets.yaml
   - apps/cert-manager-webhook-gandi.yaml
