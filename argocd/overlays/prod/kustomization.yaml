@@ -68,7 +68,6 @@ resources:
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
   # Disabled by owner: apps/nocodb.yaml
-  - apps/authentik.yaml
   # Disabled by owner: apps/netbox.yaml
   - apps/loki.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
