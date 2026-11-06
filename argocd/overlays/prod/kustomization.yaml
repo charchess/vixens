@@ -12,7 +12,6 @@ resources:
   - apps/metrics-server.yaml
   - apps/vpa.yaml
   - apps/goldilocks.yaml
-  - apps/reloader.yaml
   - apps/prometheus-operator-crds.yaml
   - apps/kyverno.yaml
   - apps/policy-reporter.yaml
@@ -21,7 +20,6 @@ resources:
   # Disabled by owner: apps/nexterm.yaml
   - apps/argocd.yaml
   - apps/txo-fabric.yaml
-  - apps/cert-manager-config.yaml
   - apps/snapshot-controller.yaml
   # UMI development overlays must never be deployed to production.
   # Official TrueNAS CSI controller and provider-neutral StorageClasses.
@@ -39,7 +37,6 @@ resources:
   # Disabled by owner: apps/birdnet-go.yaml
   - apps/victoria-metrics.yaml
   - apps/grafana.yaml
-  - apps/hubble-ui.yaml
   # Disabled by owner: apps/homepage.yaml
   # Disabled by owner: apps/linkwarden.yaml
   # Disabled by owner: apps/gluetun.yaml
@@ -80,7 +77,6 @@ resources:
   - apps/authentik.yaml
   # Disabled by owner: apps/netbox.yaml
   - apps/loki.yaml
-  - apps/fluent-bit.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
   - apps/renovate.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
