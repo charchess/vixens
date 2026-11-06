@@ -351,6 +351,68 @@ func TestPrivateHermesAPIRuntimeEnvAndPortRequireIssuedCredential(t *testing.T) 
 	}
 }
 
+func TestDeploymentRuntimePreservesPrivateAPIConfigurationAcrossReconciles(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	ctx := context.Background()
+	namespace := tenantNamespace(tenant.Name)
+	toolPolicy, err := resolveToolsetPolicy(agent, testRuntimeProfile())
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+	if err := r.ensureDeploymentWithPrivateAPI(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline", toolPolicy, integrationResolution{}, true); err != nil {
+		t.Fatal(err)
+	}
+	var first appsv1.Deployment
+	key := types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}
+	if err := c.Get(ctx, key, &first); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureDeploymentWithPrivateAPI(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline", toolPolicy, integrationResolution{}, true); err != nil {
+		t.Fatal(err)
+	}
+	var second appsv1.Deployment
+	if err := c.Get(ctx, key, &second); err != nil {
+		t.Fatal(err)
+	}
+	container := second.Spec.Template.Spec.Containers[0]
+	if !hasPrivateHermesAPIRuntime(container) {
+		t.Fatalf("deployment reconcile removed issued private API configuration: env=%#v ports=%#v", container.Env, container.Ports)
+	}
+	if second.ResourceVersion != first.ResourceVersion {
+		t.Fatalf("deployment reconcile rewrote an unchanged private API template: first=%s second=%s", first.ResourceVersion, second.ResourceVersion)
+	}
+}
+
+func hasPrivateHermesAPIRuntime(container corev1.Container) bool {
+	if !containsPrivateHermesAPIEnv(container.Env) {
+		return false
+	}
+	for _, port := range container.Ports {
+		if port.Name == "responses" && port.ContainerPort == privateHermesAPIPort && port.Protocol == corev1.ProtocolTCP {
+			return true
+		}
+	}
+	return false
+}
+
+func containsPrivateHermesAPIEnv(values []corev1.EnvVar) bool {
+	needed := map[string]bool{"API_SERVER_ENABLED": false, "API_SERVER_HOST": false, "API_SERVER_PORT": false, "API_SERVER_KEY": false}
+	for _, value := range values {
+		if _, ok := needed[value.Name]; ok {
+			needed[value.Name] = true
+		}
+	}
+	for _, found := range needed {
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
 func TestPrivateHermesAPIRuntimeDoesNotUpdateUnchangedDeployment(t *testing.T) {
 	agent, tenant := privateAPIFixture()
 	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
