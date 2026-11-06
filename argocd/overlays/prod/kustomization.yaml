@@ -82,7 +82,6 @@ resources:
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
-  - apps/adguard-home.yaml
   - apps/coredns.yaml
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
