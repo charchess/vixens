@@ -10,7 +10,6 @@ resources:
   - apps/traefik.yaml
   - apps/traefik-middlewares.yaml
   - apps/metrics-server.yaml
-  - apps/priority-classes.yaml
   - apps/vpa.yaml
   - apps/goldilocks.yaml
   - apps/reloader.yaml
