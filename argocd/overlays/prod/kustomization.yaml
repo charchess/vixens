@@ -36,7 +36,6 @@ resources:
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
   - apps/nfs-storage.yaml
-  - apps/mail-gateway.yaml
   - apps/mail.yaml
   - apps/homeassistant.yaml
   # Disabled by owner: apps/nightscout.yaml
