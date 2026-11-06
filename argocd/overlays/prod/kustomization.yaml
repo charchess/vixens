@@ -27,7 +27,6 @@ resources:
   - apps/mail.yaml
   - apps/homeassistant.yaml
   # Disabled by owner: apps/nightscout.yaml
-  - apps/mosquitto.yaml
   # Disabled by owner: apps/mealie.yaml
   # Disabled by owner: apps/birdnet-go.yaml
   - apps/victoria-metrics.yaml
@@ -62,14 +61,12 @@ resources:
   - apps/cloudnative-pg-crds.yaml
   - apps/cloudnative-pg.yaml
   - apps/plugin-barman-cloud.yaml
-  - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
   - apps/coredns.yaml
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
   # Disabled by owner: apps/nocodb.yaml
   # Disabled by owner: apps/netbox.yaml
-  - apps/loki.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
   # Disabled by owner: apps/it-tools.yaml
