@@ -5,28 +5,19 @@ namespace: argocd
 resources:
   - apps/core-prod-root.yaml
   - apps/external-secrets.yaml
-  - apps/openbao-secrets.yaml
-  - apps/cilium-lb.yaml
   # Disabled by owner: apps/crowdsec.yaml
   - apps/traefik.yaml
-  - apps/traefik-middlewares.yaml
-  - apps/metrics-server.yaml
   - apps/vpa.yaml
   - apps/kyverno.yaml
   # Disabled by owner: apps/nexterm.yaml
   - apps/argocd.yaml
-  - apps/txo-fabric.yaml
-  - apps/snapshot-controller.yaml
   # UMI development overlays must never be deployed to production.
   # Official TrueNAS CSI controller and provider-neutral StorageClasses.
   # Existing bound PVs keep their immutable CSI identities.
   - apps/synelia-prod-csi.yaml
-  - apps/local-path-provisioner.yaml
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
   - apps/nfs-storage.yaml
-  - apps/mail.yaml
-  - apps/homeassistant.yaml
   # Disabled by owner: apps/nightscout.yaml
   # Disabled by owner: apps/mealie.yaml
   # Disabled by owner: apps/birdnet-go.yaml
@@ -36,14 +27,12 @@ resources:
   # Disabled by owner: apps/linkwarden.yaml
   # Disabled by owner: apps/gluetun.yaml
   # Disabled by owner: apps/sabnzbd.yaml
-  - apps/pyload.yaml
   # Disabled by owner: apps/qbittorrent.yaml
   # Disabled by owner: apps/amule.yaml
   - apps/media-shared-secrets.yaml
   # Disabled by owner: apps/radarr.yaml
   # Disabled by owner: apps/docspell.yaml
   # Disabled by owner: apps/firefly-iii.yaml
-  - apps/actual-budget.yaml
   # Disabled by owner: apps/firefly-iii-importer.yaml
   # Disabled by owner: apps/n8n.yaml
   # Disabled by owner: apps/lidarr.yaml
@@ -55,7 +44,6 @@ resources:
   # Disabled by owner: apps/jellyseerr.yaml
   # Disabled by owner: apps/jellyfin.yaml
   # Disabled by owner: apps/hydrus-client.yaml
-  - apps/music-assistant.yaml
   # Disabled by owner: apps/vaultwarden.yaml
   # Disabled by owner: apps/sakapuss.yaml
 
@@ -77,8 +65,6 @@ resources:
   # Disabled by owner: apps/mongodb-shared.yaml
   # Disabled by owner: apps/penpot.yaml
   # Disabled by owner: apps/vikunja.yaml
-  - apps/radar.yaml
-  - apps/trilium.yaml
   # Disabled by owner: apps/bookshelf.yaml
 
 patches:
