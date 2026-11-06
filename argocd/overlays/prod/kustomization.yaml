@@ -92,7 +92,6 @@ resources:
   - apps/renovate.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
   # Disabled by owner: apps/it-tools.yaml
-  - apps/contacts.yaml
   - apps/external-dns-gandi.yaml
   - apps/external-dns-gandi-secrets.yaml
   - apps/external-dns-unifi.yaml
