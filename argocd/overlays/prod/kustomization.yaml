@@ -16,7 +16,6 @@ resources:
   - apps/synelia-prod-csi.yaml
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
-  - apps/nfs-storage.yaml
   # Disabled by owner: apps/nightscout.yaml
   # Disabled by owner: apps/mealie.yaml
   # Disabled by owner: apps/birdnet-go.yaml
@@ -118,7 +117,7 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: '^(snapshot-controller|local-path-provisioner|nfs-storage)$'
+      name: '^(snapshot-controller|local-path-provisioner)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
