@@ -38,6 +38,7 @@ spec:
         - /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-external-scaler
         - /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-interceptor
   syncPolicy:
+    preserveResourcesOnDeletion: true
     automated:
       prune: true
       selfHeal: false
