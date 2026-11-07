@@ -50,7 +50,6 @@ resources:
   - apps/cloudnative-pg.yaml
   - apps/plugin-barman-cloud.yaml
   # Disabled by owner: apps/changedetection.yaml
-  - apps/coredns.yaml
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
   # Disabled by owner: apps/nocodb.yaml
@@ -133,18 +132,6 @@ patches:
       version: v1alpha1
       kind: Application
       name: '^(truenas-csi-secrets|truenas-csi-iscsi|truenas-csi-nfs)$'
-    patch: |-
-      apiVersion: argoproj.io/v1alpha1
-      kind: Application
-      metadata:
-        name: domain-classification
-        labels:
-          vixens.io/domain: core
-  - target:
-      group: argoproj.io
-      version: v1alpha1
-      kind: Application
-      name: '^(coredns)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
