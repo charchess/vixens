@@ -111,16 +111,20 @@ jobs:
           rendered = Path("/tmp/synelia-prod-csi-render.yaml").read_text(encoding="utf-8")
           companion = Path("/tmp/synelia-prod-csi-companion.yaml").read_text(encoding="utf-8")
           root = Path("argocd/overlays/prod/kustomization.yaml").read_text(encoding="utf-8")
-          app = Path("argocd/overlays/prod/apps/synelia-prod-csi.yaml").read_text(encoding="utf-8")
+          core_root = Path("argocd/overlays/prod/apps/core-prod-root.yaml").read_text(encoding="utf-8")
 
-          assert "  - apps/synelia-prod-csi.yaml" in root
-          assert "# Disabled by owner: apps/synelia-prod-csi.yaml" not in root
-          assert "automated:" in app
-          assert "prune: false" in app
+          # The production CSI owner has moved to vixens-core. Legacy Vixens
+          # must neither retain nor disable a competing Synelia Application.
+          assert "  - apps/synelia-prod-csi.yaml" not in root
+          assert not Path("argocd/overlays/prod/apps/synelia-prod-csi.yaml").exists()
+          assert "name: core-prod-root" in core_root
+          assert "https://github.com/charchess/vixens-core.git" in core_root
+          assert "targetRevision: prod-stable" in core_root
+          assert "prune: false" in core_root
           assert "synelia.prod.csi.truenas.io" in rendered
           assert "ghcr.io/truenas/truenas-csi:v1.4.0" in rendered
-          assert "192.168.200.244" not in rendered + companion + app
-          assert "kind: Secret" not in rendered + companion + app
+          assert "192.168.200.244" not in rendered + companion + core_root
+          assert "kind: Secret" not in rendered + companion + core_root
           for parent in (
               "k8s/vixens/nfs",
               "k8s/vixens/iscsi",
