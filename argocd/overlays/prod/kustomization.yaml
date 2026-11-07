@@ -5,15 +5,12 @@ namespace: argocd
 resources:
   - apps/core-prod-root.yaml
   # Disabled by owner: apps/crowdsec.yaml
-  - apps/vpa.yaml
   - apps/kyverno.yaml
   # Disabled by owner: apps/nexterm.yaml
   # UMI development overlays must never be deployed to production.
   # Official TrueNAS CSI controller and provider-neutral StorageClasses.
   # Existing bound PVs keep their immutable CSI identities.
   - apps/synelia-prod-csi.yaml
-  - apps/keda.yaml
-  - apps/keda-http-addon.yaml
   # Disabled by owner: apps/nightscout.yaml
   # Disabled by owner: apps/mealie.yaml
   # Disabled by owner: apps/birdnet-go.yaml
@@ -53,8 +50,6 @@ resources:
   # Disabled by owner: apps/fluent-bit-syslog.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
   # Disabled by owner: apps/it-tools.yaml
-  - apps/external-dns-gandi.yaml
-  - apps/external-dns-unifi.yaml
   # Disabled by owner: apps/mariadb-shared.yaml
   # Disabled by owner: apps/mongodb-shared.yaml
   # Disabled by owner: apps/penpot.yaml
