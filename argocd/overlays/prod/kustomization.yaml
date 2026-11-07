@@ -10,7 +10,6 @@ resources:
   - apps/vpa.yaml
   - apps/kyverno.yaml
   # Disabled by owner: apps/nexterm.yaml
-  - apps/argocd.yaml
   # UMI development overlays must never be deployed to production.
   # Official TrueNAS CSI controller and provider-neutral StorageClasses.
   # Existing bound PVs keep their immutable CSI identities.
@@ -95,7 +94,7 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: '^(priority-classes|argocd|cert-manager|cert-manager-secrets)$'
+      name: '^(priority-classes|cert-manager|cert-manager-secrets)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
