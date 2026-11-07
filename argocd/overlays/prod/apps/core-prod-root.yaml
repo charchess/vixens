@@ -15,7 +15,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens-core.git
-    targetRevision: a98bf3cbceaf88b6aaa5c6bfc718520df81dfd05
+    targetRevision: 43bd880ab92e46cd1e754e51f391255acbb39954
     path: argocd/overlays/prod
   destination:
     server: https://kubernetes.default.svc
